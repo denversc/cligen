@@ -95,7 +95,9 @@ class TestArgumentParser_parse_args(unittest.TestCase):
 
     def test_Language_Invalid(self):
         self.assert_parse_args_fails(
-            ["-l", "invalid"], message="unknown language: invalid (valid values are: c, java)")
+            ["-l", "invalid"],
+            message="invalid value specified for -l/--language: "
+            "invalid (valid values are: c, java)")
 
     def test_OutputFiles_Short(self):
         self.assert_parse_args_succeeds(
@@ -158,6 +160,24 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             message="-o/--output-file was specified 2 times, "
                 "but must be specified 0 or 1 time when --inline is specified")
 
+    def test_Encoding_Short(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "-e", "utf16"],
+            encoding="utf16")
+
+    def test_Encoding_Long(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--encoding", "utf16"],
+            encoding="utf16")
+
+    def test_DefaultEncoding_NoEncodingSpecified(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--default-encoding"])
+
+    def test_DefaultEncoding_WithEncodingSpecified(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--encoding", "utf16", "--default-encoding"])
+
     def assert_parse_args_fails(self, args, message):
         x = ArgumentParser(targets=FakeTargets())
         with self.assertRaises(x.Error) as cm:
@@ -171,6 +191,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             source_file_path=DEFAULT_VALUE,
             output_file_paths=DEFAULT_VALUE,
             inline=DEFAULT_VALUE,
+            encoding=DEFAULT_VALUE,
     ):
         targets = FakeTargets()
         x = ArgumentParser(targets=targets)
@@ -192,10 +213,14 @@ class TestArgumentParser_parse_args(unittest.TestCase):
         if inline is self.DEFAULT_VALUE:
             inline = False
 
+        if encoding is self.DEFAULT_VALUE:
+            encoding = None
+
         self.assertIs(app.target_language, target_language)
         self.assertEqual(app.source_file_path, source_file_path)
         self.assertEqual(app.output_file_paths, output_file_paths)
         self.assertIs(app.inline, inline)
+        self.assertIs(app.encoding, encoding)
 
 
 class TestArgumentParser_Error(unittest.TestCase):

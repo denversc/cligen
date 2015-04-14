@@ -18,6 +18,7 @@ The command-line arguments parser for the cligen command-line utility.
 """
 
 import argparse
+import codecs
 
 from cligen.main_app import CligenApplication
 
@@ -72,6 +73,23 @@ class ArgumentParser(argparse.ArgumentParser):
                 .format("/".join(self.arg_inline.option_strings))
         )
 
+        self.arg_encoding = self.add_argument(
+            "-e", "--encoding",
+            help="""The character encoding to use when reading from and writing to files;
+            valid values include: ascii, utf8, utf16, big5, cp1252, iso-8859-1, and any other
+            character encoding recognized by the Python interpreter
+            (default: utf8)"""
+        )
+
+        self.arg_default_encoding = self.add_argument(
+            "--default-encoding",
+            action="store_const",
+            const=None,
+            dest="encoding",
+            help="""Reverse the effects of {} if previously specified"""
+                .format("/".join(self.arg_encoding.option_strings))
+        )
+
     def parse_args(self, args=None):
         namespace = self.Namespace(self)
         super().parse_args(args=args, namespace=namespace)
@@ -94,12 +112,14 @@ class ArgumentParser(argparse.ArgumentParser):
             target_language = self.get_target_language()
             inline = self.inline
             output_file_paths = self.get_output_files(target_language, inline)
+            encoding = self.get_encoding()
 
             return CligenApplication(
                 source_file_path=source_file_path,
                 output_file_paths=output_file_paths,
                 target_language=target_language,
                 inline=inline,
+                encoding=encoding,
             )
 
         def get_output_files(self, target_language, inline):
@@ -138,9 +158,20 @@ class ArgumentParser(argparse.ArgumentParser):
             try:
                 return self.parser.targets[target_language_key]
             except KeyError:
-                self.parser.error("unknown language: {} (valid values are: {})".format(
-                    target_language_key, ", ".join(sorted(self.parser.targets))))
-                raise AssertionError("should never get here")
+                    self.parser.error("invalid value specified for {}: {} (valid values are: {})"
+                        .format(
+                            "/".join(self.parser.arg_language.option_strings), target_language_key,
+                        ", ".join(sorted(self.parser.targets))))
+
+        def get_encoding(self):
+            encoding = self.encoding
+            if encoding is not None:
+                try:
+                    codecs.lookup(encoding)
+                except LookupError:
+                    self.parser.error("invalid value specified for {}: {}".format(
+                        "/".join(self.parser.arg_encoding.option_strings), encoding))
+            return encoding
 
     class Error(Exception):
 
