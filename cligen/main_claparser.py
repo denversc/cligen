@@ -53,6 +53,25 @@ class ArgumentParser(argparse.ArgumentParser):
             valid values are: {}""".format(", ".join(sorted(self.targets)))
         )
 
+        self.arg_inline = self.add_argument(
+            "--inline",
+            action="store_true",
+            default=False,
+            help="""Insert the generated code into an existing file instead of creating a new
+            file or new files;
+            a target-language-specific begin and end comment pair must exist in the output file
+            to indicate where the parsing code should be placed;
+            any code between the begin and end comments will be replaced by the generated code"""
+        )
+
+        self.arg_no_inline = self.add_argument(
+            "--no-inline",
+            dest="inline",
+            action="store_false",
+            help="""Reverse the effects of {} if previously specified"""
+                .format("/".join(self.arg_inline.option_strings))
+        )
+
     def parse_args(self, args=None):
         namespace = self.Namespace(self)
         super().parse_args(args=args, namespace=namespace)
@@ -73,21 +92,31 @@ class ArgumentParser(argparse.ArgumentParser):
         def create_application(self):
             source_file_path = self.source_file
             target_language = self.get_target_language()
-            output_file_paths = self.get_output_files(target_language)
+            inline = self.inline
+            output_file_paths = self.get_output_files(target_language, inline)
 
             return CligenApplication(
                 source_file_path=source_file_path,
                 output_file_paths=output_file_paths,
                 target_language=target_language,
+                inline=inline,
             )
 
-        def get_output_files(self, target_language):
+        def get_output_files(self, target_language, inline):
             output_files = self.output_files
             if output_files is None or len(output_files) == 0:
                 return None
 
             output_files = tuple(output_files)
-            if len(output_files) < len(target_language.output_files):
+            if inline:
+                if len(output_files) > 1:
+                    self.parser.error(
+                        "{} was specified {} times, but must be specified 0 or 1 time when "
+                        "{} is specified".format(
+                            "/".join(self.parser.arg_output_files.option_strings),
+                            len(output_files),
+                            "/".join(self.parser.arg_inline.option_strings)))
+            elif len(output_files) < len(target_language.output_files):
                 self.parser.error(
                     "missing {} argument for language {} to specify the generated {}".format(
                         "/".join(self.parser.arg_output_files.option_strings),

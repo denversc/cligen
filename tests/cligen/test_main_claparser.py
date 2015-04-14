@@ -132,6 +132,32 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             ["-l", "c", "-o", "out1.c", "-o", "out2.c", "-o", "out3.c"],
             message="too many -o/--output-file arguments specified for language C: 3 (expected 2)")
 
+    def test_Inline(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--inline"],
+            inline=True)
+
+    def test_NoInline(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--no-inline"],
+            inline=False)
+
+    def test_Inline_NoInline(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--inline", "--no-inline"],
+            inline=False)
+
+    def test_Inline_NoInline_Inline(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--inline", "--no-inline", "--inline"],
+            inline=True)
+
+    def test_Inline_MultipleOutputFiles(self):
+        self.assert_parse_args_fails(
+            ["-l", "c", "--inline", "-o", "out.h", "-o", "out.c"],
+            message="-o/--output-file was specified 2 times, "
+                "but must be specified 0 or 1 time when --inline is specified")
+
     def assert_parse_args_fails(self, args, message):
         x = ArgumentParser(targets=FakeTargets())
         with self.assertRaises(x.Error) as cm:
@@ -144,6 +170,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             target_language=DEFAULT_VALUE,
             source_file_path=DEFAULT_VALUE,
             output_file_paths=DEFAULT_VALUE,
+            inline=DEFAULT_VALUE,
     ):
         targets = FakeTargets()
         x = ArgumentParser(targets=targets)
@@ -162,9 +189,13 @@ class TestArgumentParser_parse_args(unittest.TestCase):
         else:
             output_file_paths = tuple(output_file_paths)
 
+        if inline is self.DEFAULT_VALUE:
+            inline = False
+
         self.assertIs(app.target_language, target_language)
         self.assertEqual(app.source_file_path, source_file_path)
         self.assertEqual(app.output_file_paths, output_file_paths)
+        self.assertIs(app.inline, inline)
 
 
 class TestArgumentParser_Error(unittest.TestCase):
