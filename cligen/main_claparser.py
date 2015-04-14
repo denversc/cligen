@@ -70,8 +70,8 @@ class ArgumentParser(argparse.ArgumentParser):
             "--no-inline",
             dest="inline",
             action="store_false",
-            help="""Reverse the effects of {} if previously specified"""
-                .format("/".join(self.arg_inline.option_strings))
+            help="""Reverse the effects of {} if previously specified""".format(
+                "/".join(self.arg_inline.option_strings))
         )
 
         self.example_valid_encodings = ("utf8", "utf16", "ascii", "big5", "cp1252", "iso-8859-1")
@@ -79,8 +79,8 @@ class ArgumentParser(argparse.ArgumentParser):
             "-e", "--encoding",
             help="""The character encoding to use when reading from and writing to files;
             valid values are: {}, and any other character encoding
-            recognized by the Python interpreter (default: utf8)"""
-            .format(", ".join(self.example_valid_encodings))
+            recognized by the Python interpreter (default: utf8)""".format(
+                ", ".join(self.example_valid_encodings))
         )
 
         self.arg_default_encoding = self.add_argument(
@@ -88,8 +88,8 @@ class ArgumentParser(argparse.ArgumentParser):
             action="store_const",
             const=None,
             dest="encoding",
-            help="""Reverse the effects of {} if previously specified"""
-                .format("/".join(self.arg_encoding.option_strings))
+            help="""Reverse the effects of {} if previously specified""".format(
+                "/".join(self.arg_encoding.option_strings))
         )
 
         self.newline_names = collections.OrderedDict((
@@ -101,8 +101,8 @@ class ArgumentParser(argparse.ArgumentParser):
             "--newline",
             help="""The character sequence to use in generated code to insert a line break;
             if not specified then the newline character will be detected from the output file if
-            it already exists or \\n will be used; valid values are: {}"""
-            .format(", ".join(self.newline_names))
+            it already exists or \\n will be used; valid values are: {}""".format(
+                ", ".join(self.newline_names))
         )
 
         self.arg_detect_newline = self.add_argument(
@@ -110,8 +110,8 @@ class ArgumentParser(argparse.ArgumentParser):
             action="store_const",
             const=None,
             dest="newline",
-            help="""Reverse the effects of {} if previously specified"""
-                .format("/".join(self.arg_encoding.option_strings))
+            help="""Reverse the effects of {} if previously specified""".format(
+                "/".join(self.arg_encoding.option_strings))
         )
 
     def parse_args(self, args=None):
@@ -184,10 +184,11 @@ class ArgumentParser(argparse.ArgumentParser):
             try:
                 return self.parser.targets[target_language_key]
             except KeyError:
-                    self.parser.error("invalid value specified for {}: {} (valid values are: {})"
-                        .format(
-                            "/".join(self.parser.arg_language.option_strings), target_language_key,
-                        ", ".join(sorted(self.parser.targets))))
+                    self.parser.error(
+                        "invalid value specified for {}: {} (valid values are: {})".format(
+                            "/".join(self.parser.arg_language.option_strings),
+                            target_language_key,
+                            ", ".join(sorted(self.parser.targets))))
 
         def get_encoding(self):
             encoding = self.encoding
@@ -195,8 +196,8 @@ class ArgumentParser(argparse.ArgumentParser):
                 try:
                     codecs.lookup(encoding)
                 except LookupError:
-                    self.parser.error("invalid value specified for {}: {} "
-                        "(example valid values are: {})".format(
+                    self.parser.error(
+                        "invalid value specified for {}: {} (example valid values are: {})".format(
                             "/".join(self.parser.arg_encoding.option_strings), encoding,
                             ", ".join(self.parser.example_valid_encodings)))
             return encoding
@@ -208,8 +209,8 @@ class ArgumentParser(argparse.ArgumentParser):
             elif newline_name in self.parser.newline_names:
                 return self.parser.newline_names[newline_name]
             else:
-                self.parser.error("invalid value specified for {}: {} (valid values are: {})"
-                    .format(
+                self.parser.error(
+                    "invalid value specified for {}: {} (valid values are: {})".format(
                         "/".join(self.parser.arg_newline.option_strings),
                         newline_name,
                         ", ".join(self.parser.newline_names)))

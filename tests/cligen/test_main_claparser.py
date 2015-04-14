@@ -158,7 +158,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
         self.assert_parse_args_fails(
             ["-l", "c", "--inline", "-o", "out.h", "-o", "out.c"],
             message="-o/--output-file was specified 2 times, "
-                "but must be specified 0 or 1 time when --inline is specified")
+                    "but must be specified 0 or 1 time when --inline is specified")
 
     def test_Encoding_Short(self):
         self.assert_parse_args_succeeds(
@@ -174,7 +174,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
         self.assert_parse_args_fails(
             ["-l", "c", "--encoding", "abcd"],
             message="invalid value specified for -e/--encoding: abcd "
-                "(example valid values are: utf8, utf16, ascii, big5, cp1252, iso-8859-1)")
+                    "(example valid values are: utf8, utf16, ascii, big5, cp1252, iso-8859-1)")
 
     def test_DefaultEncoding_NoEncodingSpecified(self):
         self.assert_parse_args_succeeds(
@@ -203,7 +203,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
         self.assert_parse_args_fails(
             ["-l", "c", "--newline", "abc"],
             message="invalid value specified for --newline: abc "
-                "(valid values are: \\n, \\r, \\r\\n)")
+                    "(valid values are: \\n, \\r, \\r\\n)")
 
     def test_DetectNewline(self):
         self.assert_parse_args_succeeds(
