@@ -90,7 +90,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
     def test_Language_Short_Java(self):
         self.assert_parse_args_succeeds(["-l", "java"], target_language="java")
 
-    def test_Language_Short_Java(self):
+    def test_Language_Long_Java(self):
         self.assert_parse_args_succeeds(["--language", "java"], target_language="java")
 
     def test_Language_Invalid(self):
