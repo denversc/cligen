@@ -1,0 +1,18 @@
+<?xml version="1.0" ?>
+
+<!--
+This is an example cligen argument specification file.
+
+The contents of this file are in the public domain and may be used for any purpose without
+restriction.  This file is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+-->
+
+<cligen xmlns="http://schemas.cligen.io/arguments">
+    <argument id="input_file">
+        <name>-i</name>
+        <name>--input-file</name>
+        <target>input_path</target>
+        <type>string</type>
+    </argument>
+</cligen>
