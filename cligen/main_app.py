@@ -20,9 +20,11 @@ The "main application" class for the cligen command-line utility.
 
 class CligenApplication:
 
-    def __init__(self, source_file_path, output_file_paths, target_language, inline, encoding):
+    def __init__(self, source_file_path, output_file_paths, target_language, inline, encoding,
+            newline):
         self.source_file_path = source_file_path
         self.output_file_paths = output_file_paths
         self.target_language = target_language
         self.inline = inline
         self.encoding = encoding
+        self.newline = newline

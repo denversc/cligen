@@ -19,6 +19,7 @@ The command-line arguments parser for the cligen command-line utility.
 
 import argparse
 import codecs
+import collections
 
 from cligen.main_app import CligenApplication
 
@@ -73,12 +74,13 @@ class ArgumentParser(argparse.ArgumentParser):
                 .format("/".join(self.arg_inline.option_strings))
         )
 
+        self.example_valid_encodings = ("utf8", "utf16", "ascii", "big5", "cp1252", "iso-8859-1")
         self.arg_encoding = self.add_argument(
             "-e", "--encoding",
             help="""The character encoding to use when reading from and writing to files;
-            valid values include: ascii, utf8, utf16, big5, cp1252, iso-8859-1, and any other
-            character encoding recognized by the Python interpreter
-            (default: utf8)"""
+            valid values are: {}, and any other character encoding
+            recognized by the Python interpreter (default: utf8)"""
+            .format(", ".join(self.example_valid_encodings))
         )
 
         self.arg_default_encoding = self.add_argument(
@@ -86,6 +88,28 @@ class ArgumentParser(argparse.ArgumentParser):
             action="store_const",
             const=None,
             dest="encoding",
+            help="""Reverse the effects of {} if previously specified"""
+                .format("/".join(self.arg_encoding.option_strings))
+        )
+
+        self.newline_names = collections.OrderedDict((
+            ("\\n", "\n"),
+            ("\\r", "\r"),
+            ("\\r\\n", "\r\n"),
+        ))
+        self.arg_newline = self.add_argument(
+            "--newline",
+            help="""The character sequence to use in generated code to insert a line break;
+            if not specified then the newline character will be detected from the output file if
+            it already exists or \\n will be used; valid values are: {}"""
+            .format(", ".join(self.newline_names))
+        )
+
+        self.arg_detect_newline = self.add_argument(
+            "--detect-newline",
+            action="store_const",
+            const=None,
+            dest="newline",
             help="""Reverse the effects of {} if previously specified"""
                 .format("/".join(self.arg_encoding.option_strings))
         )
@@ -113,6 +137,7 @@ class ArgumentParser(argparse.ArgumentParser):
             inline = self.inline
             output_file_paths = self.get_output_files(target_language, inline)
             encoding = self.get_encoding()
+            newline = self.get_newline()
 
             return CligenApplication(
                 source_file_path=source_file_path,
@@ -120,6 +145,7 @@ class ArgumentParser(argparse.ArgumentParser):
                 target_language=target_language,
                 inline=inline,
                 encoding=encoding,
+                newline=newline,
             )
 
         def get_output_files(self, target_language, inline):
@@ -169,9 +195,24 @@ class ArgumentParser(argparse.ArgumentParser):
                 try:
                     codecs.lookup(encoding)
                 except LookupError:
-                    self.parser.error("invalid value specified for {}: {}".format(
-                        "/".join(self.parser.arg_encoding.option_strings), encoding))
+                    self.parser.error("invalid value specified for {}: {} "
+                        "(example valid values are: {})".format(
+                            "/".join(self.parser.arg_encoding.option_strings), encoding,
+                            ", ".join(self.parser.example_valid_encodings)))
             return encoding
+
+        def get_newline(self):
+            newline_name = self.newline
+            if newline_name is None:
+                return None
+            elif newline_name in self.parser.newline_names:
+                return self.parser.newline_names[newline_name]
+            else:
+                self.parser.error("invalid value specified for {}: {} (valid values are: {})"
+                    .format(
+                        "/".join(self.parser.arg_newline.option_strings),
+                        newline_name,
+                        ", ".join(self.parser.newline_names)))
 
     class Error(Exception):
 

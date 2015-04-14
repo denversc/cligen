@@ -170,6 +170,12 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             ["-l", "c", "--encoding", "utf16"],
             encoding="utf16")
 
+    def test_Encoding_Invalid(self):
+        self.assert_parse_args_fails(
+            ["-l", "c", "--encoding", "abcd"],
+            message="invalid value specified for -e/--encoding: abcd "
+                "(example valid values are: utf8, utf16, ascii, big5, cp1252, iso-8859-1)")
+
     def test_DefaultEncoding_NoEncodingSpecified(self):
         self.assert_parse_args_succeeds(
             ["-l", "c", "--default-encoding"])
@@ -177,6 +183,35 @@ class TestArgumentParser_parse_args(unittest.TestCase):
     def test_DefaultEncoding_WithEncodingSpecified(self):
         self.assert_parse_args_succeeds(
             ["-l", "c", "--encoding", "utf16", "--default-encoding"])
+
+    def test_Newline_LF(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--newline", "\\n"],
+            newline="\n")
+
+    def test_Newline_CR(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--newline", "\\r"],
+            newline="\r")
+
+    def test_Newline_CRLF(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--newline", "\\r\\n"],
+            newline="\r\n")
+
+    def test_Newline_Invalid(self):
+        self.assert_parse_args_fails(
+            ["-l", "c", "--newline", "abc"],
+            message="invalid value specified for --newline: abc "
+                "(valid values are: \\n, \\r, \\r\\n)")
+
+    def test_DetectNewline(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--detect-newline"])
+
+    def test_DetectNewline_AfterNewline(self):
+        self.assert_parse_args_succeeds(
+            ["-l", "c", "--newline", "\\r\\n", "--detect-newline"])
 
     def assert_parse_args_fails(self, args, message):
         x = ArgumentParser(targets=FakeTargets())
@@ -192,6 +227,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             output_file_paths=DEFAULT_VALUE,
             inline=DEFAULT_VALUE,
             encoding=DEFAULT_VALUE,
+            newline=DEFAULT_VALUE,
     ):
         targets = FakeTargets()
         x = ArgumentParser(targets=targets)
@@ -216,11 +252,15 @@ class TestArgumentParser_parse_args(unittest.TestCase):
         if encoding is self.DEFAULT_VALUE:
             encoding = None
 
+        if newline is self.DEFAULT_VALUE:
+            newline = None
+
         self.assertIs(app.target_language, target_language)
         self.assertEqual(app.source_file_path, source_file_path)
         self.assertEqual(app.output_file_paths, output_file_paths)
         self.assertIs(app.inline, inline)
         self.assertIs(app.encoding, encoding)
+        self.assertEqual(app.newline, newline)
 
 
 class TestArgumentParser_Error(unittest.TestCase):
