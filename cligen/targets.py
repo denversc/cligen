@@ -17,8 +17,10 @@
 Registry for supported target languages for cligen.
 """
 
+import fakeable
 
-class TargetRegistry:
+
+class TargetRegistry(metaclass=fakeable.Fakeable):
 
     def __init__(self):
         self.targets = {}

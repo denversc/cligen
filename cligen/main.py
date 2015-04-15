@@ -33,10 +33,7 @@ def main():
 
 
 def run():
-    target_registry = TargetRegistry()
-    targets = target_registry.load()
-
-    arg_parser = ArgumentParser(targets=targets)
+    arg_parser = ArgumentParser()
     try:
         app = arg_parser.parse_args()
     except arg_parser.Error as e:

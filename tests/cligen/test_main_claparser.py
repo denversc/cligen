@@ -15,61 +15,58 @@
 
 import unittest
 
+import fakeable
+
 from cligen.main_claparser import ArgumentParser
 from cligen.targets import TargetLanguageBase
+from cligen.targets import TargetRegistry
 
 
 class TestArgumentParser(unittest.TestCase):
 
-    def test___init___PositionalArgs(self):
-        targets = FakeTargets()
-        x = ArgumentParser(targets)
-        self.assertIs(x.targets, targets)
-
-    def test___init___KeywordArgs(self):
-        targets = FakeTargets()
-        x = ArgumentParser(targets=targets)
-        self.assertIs(x.targets, targets)
-
     def test_exit_PositionalArgs(self):
-        x = ArgumentParser(targets=FakeTargets())
+        x = ArgumentParser()
         with self.assertRaises(x.Error) as cm:
             x.exit(5, "whatever")
         self.assertEqual("{}".format(cm.exception), "whatever")
         self.assertEqual(cm.exception.exit_code, 5)
 
     def test_exit_KeywordArgs(self):
-        x = ArgumentParser(targets=FakeTargets())
+        x = ArgumentParser()
         with self.assertRaises(x.Error) as cm:
             x.exit(status=6, message="whatever")
         self.assertEqual("{}".format(cm.exception), "whatever")
         self.assertEqual(cm.exception.exit_code, 6)
 
     def test_exit_DefaultArgs(self):
-        x = ArgumentParser(targets=FakeTargets())
+        x = ArgumentParser()
         with self.assertRaises(x.Error) as cm:
             x.exit()
         self.assertEqual("{}".format(cm.exception), "None")
         self.assertEqual(cm.exception.exit_code, 0)
 
     def test_error_PositionalArgs(self):
-        x = ArgumentParser(targets=FakeTargets())
+        x = ArgumentParser()
         with self.assertRaises(x.Error) as cm:
             x.error("blah blah")
         self.assertEqual("{}".format(cm.exception), "blah blah")
         self.assertEqual(cm.exception.exit_code, 2)
 
     def test_error_KeywordArgs(self):
-        x = ArgumentParser(targets=FakeTargets())
+        x = ArgumentParser()
         with self.assertRaises(x.Error) as cm:
             x.error(message="blah blah")
         self.assertEqual("{}".format(cm.exception), "blah blah")
         self.assertEqual(cm.exception.exit_code, 2)
 
 
-class TestArgumentParser_parse_args(unittest.TestCase):
+class TestArgumentParser_parse_args(fakeable.FakeableCleanupMixin, unittest.TestCase):
 
     DEFAULT_VALUE = object()
+
+    def setUp(self):
+        super().setUp()
+        fakeable.set_fake_class(TargetRegistry, FakeTargetRegistry)
 
     def test_NoArgs(self):
         self.assert_parse_args_fails([], "-l/--language not specified")
@@ -214,7 +211,7 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             ["-l", "c", "--newline", "\\r\\n", "--detect-newline"])
 
     def assert_parse_args_fails(self, args, message):
-        x = ArgumentParser(targets=FakeTargets())
+        x = ArgumentParser()
         with self.assertRaises(x.Error) as cm:
             x.parse_args(args)
         self.assertEqual("{}".format(cm.exception), message)
@@ -229,14 +226,13 @@ class TestArgumentParser_parse_args(unittest.TestCase):
             encoding=DEFAULT_VALUE,
             newline=DEFAULT_VALUE,
     ):
-        targets = FakeTargets()
-        x = ArgumentParser(targets=targets)
+        x = ArgumentParser()
         app = x.parse_args(args)
 
         if target_language is self.DEFAULT_VALUE:
-            target_language = targets["c"]
+            target_language = x.targets["c"]
         else:
-            target_language = targets[target_language]
+            target_language = x.targets[target_language]
 
         if source_file_path is self.DEFAULT_VALUE:
             source_file_path = "cligen.xml"
@@ -310,3 +306,9 @@ class FakeTargets(dict):
         yield TargetLanguageBase(key="java", name="Java", output_files=(
             TargetLanguageBase.OutputFileInfo(name="source file", default_value="Cligen.java"),
         ))
+
+
+class FakeTargetRegistry:
+
+    def load(self):
+        return FakeTargets()

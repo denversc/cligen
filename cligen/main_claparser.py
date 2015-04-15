@@ -22,13 +22,15 @@ import codecs
 import collections
 
 from cligen.main_app import CligenApplication
+from cligen.targets import TargetRegistry
 
 
 class ArgumentParser(argparse.ArgumentParser):
 
-    def __init__(self, targets):
+    def __init__(self):
         super().__init__(usage="%(prog)s [options] <input_file>")
-        self.targets = targets
+        target_registry = TargetRegistry()
+        self.targets = target_registry.load()
         self._add_arguments()
 
     def _add_arguments(self):
