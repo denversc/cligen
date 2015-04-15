@@ -20,6 +20,7 @@ The command-line arguments parser for the cligen command-line utility.
 import argparse
 import codecs
 import collections
+import os
 import sys
 
 from cligen.main_app import CligenApplication
@@ -118,6 +119,14 @@ class ArgumentParser(argparse.ArgumentParser):
                 "/".join(self.arg_encoding.option_strings))
         )
 
+        self.arg_sample_xml = self.add_argument(
+            "--sample-xml",
+            nargs=0,
+            action=self.PrintSampleXmlAction,
+            help="""Prints a sample cligen XML argument specification document to standard output
+            then exits"""
+        )
+
     def parse_args(self, args=None):
         namespace = self.Namespace(self)
         super().parse_args(args=args, namespace=namespace)
@@ -145,6 +154,16 @@ class ArgumentParser(argparse.ArgumentParser):
             if file is None:
                 file = self.stdout
             file.write(message)
+
+    class PrintSampleXmlAction(argparse.Action):
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            dir_path = os.path.dirname(__file__)
+            xml_path = os.path.join(dir_path, "sample_cligen.xml")
+            with open(xml_path, "rt", encoding="utf8") as f:
+                for line in f:
+                    parser._print_message(line)
+            parser.exit(0)
 
     class Namespace(argparse.Namespace):
 

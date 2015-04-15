@@ -14,11 +14,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import io
+import os
 import sys
 import unittest
 
 import fakeable
 
+import cligen.targets
 from cligen.main_claparser import ArgumentParser
 from cligen.targets import TargetLanguageBase
 from cligen.targets import TargetRegistry
@@ -239,6 +241,19 @@ class TestArgumentParser_parse_args(fakeable.FakeableCleanupMixin, unittest.Test
     def test_DetectNewline_AfterNewline(self):
         self.assert_parse_args_succeeds(
             ["-l", "c", "--newline", "\\r\\n", "--detect-newline"])
+
+    def test_SampleXml(self):
+        stdout = io.StringIO()
+        self.assert_parse_args_fails(["--sample-xml"], message=None, exit_code=0, stdout=stdout)
+        stdout.seek(0)
+        actual_sample_xml = stdout.read()
+
+        expected_sample_xml_dir = os.path.dirname(cligen.targets.__file__)
+        expected_sample_xml_path = os.path.join(expected_sample_xml_dir, "sample_cligen.xml")
+        with open(expected_sample_xml_path, "rt", encoding="utf8") as f:
+            expected_sample_xml = f.read()
+
+        self.assertEquals(actual_sample_xml.strip(), expected_sample_xml.strip())
 
     def assert_parse_args_fails(self, args, message, exit_code=None, stdout=None):
         if exit_code is None:
