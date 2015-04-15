@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
+import sys
 import unittest
 
 import fakeable
@@ -23,6 +25,20 @@ from cligen.targets import TargetRegistry
 
 
 class TestArgumentParser(unittest.TestCase):
+
+    def test___init___PositionalArgs(self):
+        stdout = object()
+        x = ArgumentParser(stdout)
+        self.assertIs(x.stdout, stdout)
+
+    def test___init___KeywordArgs(self):
+        stdout = object()
+        x = ArgumentParser(stdout=stdout)
+        self.assertIs(x.stdout, stdout)
+
+    def test___init___DefaultArgs(self):
+        x = ArgumentParser()
+        self.assertIs(x.stdout, sys.stdout)
 
     def test_exit_PositionalArgs(self):
         x = ArgumentParser()
@@ -73,6 +89,20 @@ class TestArgumentParser_parse_args(fakeable.FakeableCleanupMixin, unittest.Test
 
     def test_ExtraPositionalArg(self):
         self.assert_parse_args_fails(["-l", "c", "a", "extra"], "unrecognized arguments: extra")
+
+    def test_Help_Short(self):
+        self.assert_help_text_printed(["-h"])
+
+    def test_Help_Long(self):
+        self.assert_help_text_printed(["--help"])
+
+    def assert_help_text_printed(self, args):
+        stdout = io.StringIO()
+        self.assert_parse_args_fails(args, message=None, exit_code=0, stdout=stdout)
+        stdout.seek(0)
+        help_text = stdout.read()
+        self.assertIn("--language", help_text)
+        self.assertIn("--output-file", help_text)
 
     def test_InputFile(self):
         self.assert_parse_args_succeeds(
@@ -210,12 +240,17 @@ class TestArgumentParser_parse_args(fakeable.FakeableCleanupMixin, unittest.Test
         self.assert_parse_args_succeeds(
             ["-l", "c", "--newline", "\\r\\n", "--detect-newline"])
 
-    def assert_parse_args_fails(self, args, message):
-        x = ArgumentParser()
+    def assert_parse_args_fails(self, args, message, exit_code=None, stdout=None):
+        if exit_code is None:
+            exit_code = 2
+        if stdout is None:
+            stdout = io.StringIO()
+        x = ArgumentParser(stdout=stdout)
         with self.assertRaises(x.Error) as cm:
             x.parse_args(args)
-        self.assertEqual("{}".format(cm.exception), message)
-        self.assertEqual(cm.exception.exit_code, 2)
+
+        self.assertEqual("{}".format(cm.exception), "{}".format(message))
+        self.assertEqual(cm.exception.exit_code, exit_code)
 
     def assert_parse_args_succeeds(
             self, args,
@@ -226,7 +261,9 @@ class TestArgumentParser_parse_args(fakeable.FakeableCleanupMixin, unittest.Test
             encoding=DEFAULT_VALUE,
             newline=DEFAULT_VALUE,
     ):
-        x = ArgumentParser()
+        stdout = io.StringIO()
+        x = ArgumentParser(stdout=stdout)
+
         app = x.parse_args(args)
 
         if target_language is self.DEFAULT_VALUE:

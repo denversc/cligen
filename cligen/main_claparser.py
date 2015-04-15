@@ -20,6 +20,7 @@ The command-line arguments parser for the cligen command-line utility.
 import argparse
 import codecs
 import collections
+import sys
 
 from cligen.main_app import CligenApplication
 from cligen.targets import TargetRegistry
@@ -27,10 +28,11 @@ from cligen.targets import TargetRegistry
 
 class ArgumentParser(argparse.ArgumentParser):
 
-    def __init__(self):
+    def __init__(self, stdout=None):
         super().__init__(usage="%(prog)s [options] <input_file>")
         target_registry = TargetRegistry()
         self.targets = target_registry.load()
+        self.stdout = stdout if stdout is not None else sys.stdout
         self._add_arguments()
 
     def _add_arguments(self):
@@ -127,6 +129,22 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def error(self, message):
         self.exit(status=2, message=message)
+
+    def print_usage(self, file=None):
+        if file is None:
+            file = self.stdout
+        self._print_message(self.format_usage(), file)
+
+    def print_help(self, file=None):
+        if file is None:
+            file = self.stdout
+        self._print_message(self.format_help(), file)
+
+    def _print_message(self, message, file=None):
+        if message:
+            if file is None:
+                file = self.stdout
+            file.write(message)
 
     class Namespace(argparse.Namespace):
 
