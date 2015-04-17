@@ -9,10 +9,8 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 -->
 
 <cligen xmlns="http://schemas.cligen.io/arguments">
-    <argument id="input_file">
+    <argument>
         <name>-i</name>
         <name>--input-file</name>
-        <target>input_path</target>
-        <type>string</type>
     </argument>
 </cligen>
