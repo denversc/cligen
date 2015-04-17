@@ -253,7 +253,7 @@ class TestArgumentParser_parse_args(fakeable.FakeableCleanupMixin, unittest.Test
         with open(expected_sample_xml_path, "rt", encoding="utf8") as f:
             expected_sample_xml = f.read()
 
-        self.assertEquals(actual_sample_xml.strip(), expected_sample_xml.strip())
+        self.assertEqual(actual_sample_xml.strip(), expected_sample_xml.strip())
 
     def assert_parse_args_fails(self, args, message, exit_code=None, stdout=None):
         if exit_code is None:
