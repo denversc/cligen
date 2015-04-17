@@ -19,6 +19,7 @@ import xml.etree.ElementTree
 
 from cligen.argspec_xml_parser import ArgumentSpecParser
 
+
 class TestSampleCligenXml(unittest.TestCase):
 
     def test_ValidUTF8(self):
