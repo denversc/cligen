@@ -17,5 +17,45 @@
 A class that contains a specification for a command-line arguments parser produced by cligen.
 """
 
+
 class ArgumentParserSpec:
-    pass
+
+    def __init__(self, arguments):
+        """
+        Initializes a new instance of ArgumentParserSpec.
+        *arguments* must be a list or tuple containing ArgumentParserSpec.Argument objects, and
+        lists the arguments in this parser specification.
+        """
+        self.arguments = arguments
+
+    def __eq__(self, other):
+        try:
+            other_arguments = other.arguments
+        except AttributeError:
+            return False
+        else:
+            return self.arguments == other_arguments
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    class Argument:
+
+        def __init__(self, names):
+            """
+            Initializes a new instance of this class.
+            *names* must be a list or tuple of strings, each of which defines the names that map to
+            this argument when specified on the command line (e.g. ["-o", "--output-file"]).
+            """
+            self.names = names
+
+        def __eq__(self, other):
+            try:
+                other_names = other.names
+            except AttributeError:
+                return False
+            else:
+                return self.names == other_names
+
+        def __ne__(self, other):
+            return not self.__eq__(other)

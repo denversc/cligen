@@ -47,7 +47,7 @@ class ArgumentSpecParser:
 
     def _parse_document(self, root):
         ns = {"cligen", self.XML_NAMESPACE}
-        result = ArgumentParserSpec()
+        data = self.ParsedData()
 
         expected_root_tag = "{{{}}}{}".format(self.XML_NAMESPACE, self.TAG_ROOT)
         if root.tag != expected_root_tag:
@@ -55,7 +55,9 @@ class ArgumentSpecParser:
                 "incorrect tag name of XML root element: {} (expected {})".format(
                     root.tag, expected_root_tag))
 
-        return result
+        return ArgumentParserSpec(
+            arguments=data.arguments,
+        )
 
     class Error(Exception):
         pass
@@ -65,3 +67,8 @@ class ArgumentSpecParser:
 
     class CligenXmlError(Error):
         pass
+
+    class ParsedData:
+
+        def __init__(self):
+            self.arguments = []
