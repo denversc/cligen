@@ -40,7 +40,17 @@ class Test_ArgumentSpecParser_parse_file(unittest.TestCase):
         finally:
             os.rmdir(temp_dir_path)
 
-    def test_IsValidDocoument(self):
+    def test_InvalidXml(self):
+        (handle, temp_file_path) = tempfile.mkstemp()
+        os.close(handle)
+        try:
+            x = ArgumentSpecParser()
+            with self.assertRaises(x.XmlParseError):
+                x.parse_file(temp_file_path)
+        finally:
+            os.unlink(temp_file_path)
+
+    def test_ValidDocoument(self):
         (handle, temp_file_path) = tempfile.mkstemp()
         with os.fdopen(handle, "wt", encoding="utf8") as f:
             print("""<?xml version="1.0" ?>
