@@ -17,6 +17,7 @@ import os
 import unittest
 import xml.etree.ElementTree
 
+from cligen.argspec_xml_parser import ArgumentSpecParser
 
 class TestSampleCligenXml(unittest.TestCase):
 
@@ -28,6 +29,11 @@ class TestSampleCligenXml(unittest.TestCase):
     def test_ValidXML(self):
         path = self.sample_cligen_xml_path()
         xml.etree.ElementTree.parse(path)
+
+    def test_ValidCligenArgumentSpec(self):
+        path = self.sample_cligen_xml_path()
+        parser = ArgumentSpecParser()
+        parser.parse_file(path)
 
     def sample_cligen_xml_path(self):
         import cligen.main
