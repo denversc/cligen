@@ -50,17 +50,17 @@ class Test_ArgumentSpecParser_parse_file(unittest.TestCase):
         finally:
             os.unlink(temp_file_path)
 
-    def test_ValidDocoument(self):
+    def test_ValidDocument(self):
         (handle, temp_file_path) = tempfile.mkstemp()
-        with os.fdopen(handle, "wt", encoding="utf8") as f:
-            print("""<?xml version="1.0" ?>
+        with os.fdopen(handle, "wb") as f:
+            f.write("""<?xml version="1.0" ?>
                 <cligen xmlns="http://schemas.cligen.io/arguments">
                     <argument>
                         <name>-i</name>
                         <name>--input-file</name>
                     </argument>
                 </cligen>
-            """, file=f)
+            """.encode("utf8"))
         try:
             x = ArgumentSpecParser()
             retval = x.parse_file(temp_file_path)
@@ -74,19 +74,19 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
 
     def test_EmptyFile(self):
         self.assert_xml_parse_error(
-            xml_string="",
+            "",
             expected_message="no element found: line 1, column 0"
         )
 
     def test_InvalidXml1(self):
         self.assert_xml_parse_error(
-            xml_string="<unclosed",
+            "<unclosed",
             expected_message="unclosed token: line 1, column 0"
         )
 
     def test_InvalidXml2(self):
         self.assert_xml_parse_error(
-            xml_string="<unmatched>",
+            "<unmatched>",
             expected_message="no element found: line 1, column 11"
         )
 
@@ -95,3 +95,78 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
         with self.assertRaises(x.XmlParseError) as cm:
             x.parse_string(xml_string)
         self.assertEqual(expected_message, "{}".format(cm.exception))
+
+    def test_InvalidXmlRootElement_WrongName_NoNamespace(self):
+        self.assert_cligen_xml_error(
+            "<wrongname/>",
+            expected_message="incorrect tag name of XML root element: "
+            "wrongname (expected {http://schemas.cligen.io/arguments}cligen)"
+        )
+
+    def test_InvalidXmlRootElement_WrongName_IncorrectNamespace(self):
+        self.assert_cligen_xml_error(
+            """<wrongname xmlns="http://www.bad.com" />""",
+            expected_message="incorrect tag name of XML root element: "
+            "{http://www.bad.com}wrongname (expected {http://schemas.cligen.io/arguments}cligen)"
+        )
+
+    def test_InvalidXmlRootElement_WrongName_CorrectNamespace(self):
+        self.assert_cligen_xml_error(
+            """<wrongname xmlns="http://schemas.cligen.io/arguments" />""",
+            expected_message="incorrect tag name of XML root element: "
+            "{http://schemas.cligen.io/arguments}wrongname "
+            "(expected {http://schemas.cligen.io/arguments}cligen)"
+        )
+
+    def test_InvalidXmlRootElement_CorrectName_NoNamespace(self):
+        self.assert_cligen_xml_error(
+            "<cligen />",
+            expected_message="incorrect tag name of XML root element: "
+            "cligen (expected {http://schemas.cligen.io/arguments}cligen)"
+        )
+
+    def test_InvalidXmlRootElement_CorrectName_IncorrectNamespace(self):
+        self.assert_cligen_xml_error(
+            """<cligen xmlns="http://www.bad.com" />""",
+            expected_message="incorrect tag name of XML root element: "
+            "{http://www.bad.com}cligen (expected {http://schemas.cligen.io/arguments}cligen)"
+        )
+
+    def assert_cligen_xml_error(self, xml_string, expected_message):
+        x = ArgumentSpecParser()
+        with self.assertRaises(x.CligenXmlError) as cm:
+            x.parse_string(xml_string)
+        self.assertEqual(expected_message, "{}".format(cm.exception))
+
+    def test_NoArguments(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments" />
+            """,
+            arguments=[],
+        )
+
+    def test_1Argument(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                        <key>-n</key>
+                        <key>--name</key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(keys=("-n", "--name"))
+            ],
+        )
+
+    def assert_xml_parse_success(self, xml_string, arguments=None):
+        x = ArgumentSpecParser()
+        result = x.parse_string(xml_string)
+
+        if arguments is None:
+            arguments = []
+        arguments = tuple(arguments)
+
+        self.assertEqual(result.arguments, arguments)

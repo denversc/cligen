@@ -27,6 +27,8 @@ class ArgumentSpecParser:
     XML_NAMESPACE = "http://schemas.cligen.io/arguments"
 
     TAG_ROOT = "cligen"
+    TAG_ARGUMENT = "argument"
+    TAG_KEY = "key"
 
     def parse_string(self, xml_string):
         try:
@@ -49,15 +51,39 @@ class ArgumentSpecParser:
         ns = {"cligen", self.XML_NAMESPACE}
         data = self.ParsedData()
 
-        expected_root_tag = "{{{}}}{}".format(self.XML_NAMESPACE, self.TAG_ROOT)
+        expected_root_tag = self._qualified_tag(self.TAG_ROOT)
         if root.tag != expected_root_tag:
             raise self.CligenXmlError(
                 "incorrect tag name of XML root element: {} (expected {})".format(
                     root.tag, expected_root_tag))
 
+        argument_tag = self._qualified_tag(self.TAG_ARGUMENT)
+        for element in root:
+            if element.tag == argument_tag:
+                argument = self._parse_argument(element)
+                data.arguments.append(argument)
+
         return ArgumentParserSpec(
-            arguments=data.arguments,
+            arguments=tuple(data.arguments),
         )
+
+    def _parse_argument(self, root):
+        keys = []
+
+        key_tag = self._qualified_tag(self.TAG_KEY)
+
+        for element in root:
+            if element.tag == key_tag:
+                key = element.text.strip()
+                keys.append(key)
+
+        return ArgumentParserSpec.Argument(
+            keys=tuple(keys),
+        )
+
+    @classmethod
+    def _qualified_tag(cls, tag):
+        return "{{{}}}{}".format(cls.XML_NAMESPACE, tag)
 
     class Error(Exception):
         pass
