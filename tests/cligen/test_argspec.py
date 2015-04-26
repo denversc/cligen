@@ -118,6 +118,26 @@ class Test_ArgumentSpecParser_Argument(unittest.TestCase):
         x2 = self.new_Argument(keys=[])
         self.assertTrue(x1 != x2)
 
+    def test___str___keys_Length0(self):
+        x = self.new_Argument(keys=[])
+        self.assertEqual("", "{}".format(x))
+
+    def test___str___keys_Length1(self):
+        x = self.new_Argument(keys=["-n"])
+        self.assertEqual("-n", "{}".format(x))
+
+    def test___str___keys_Length2(self):
+        x = self.new_Argument(keys=["-n", "--name"])
+        self.assertEqual("-n/--name", "{}".format(x))
+
+    def test___repr___(self):
+        keys = ["keys"]
+        x = self.new_Argument(keys=keys)
+        expected = "Argument(keys={keys!r})".format(
+            keys=keys,
+        )
+        self.assertEqual(expected, "{!r}".format(x))
+
     def new_Argument(self, keys=None):
         if keys is None:
             keys = ["-o", "--output-file"]

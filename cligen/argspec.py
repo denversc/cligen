@@ -59,3 +59,9 @@ class ArgumentParserSpec:
 
         def __ne__(self, other):
             return not self.__eq__(other)
+
+        def __str__(self):
+            return "/".join(self.keys)
+
+        def __repr__(self):
+            return "Argument(keys={0.keys!r})".format(self)
