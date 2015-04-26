@@ -65,8 +65,8 @@ class Test_ArgumentSpecParser(unittest.TestCase):
     def new_ArgumentParserSpec(self, arguments=None):
         if arguments is None:
             arguments = [
-                ArgumentParserSpec.Argument(names=["-o", "--output-file"]),
-                ArgumentParserSpec.Argument(names=["-i", "--input-file"]),
+                ArgumentParserSpec.Argument(keys=["-o", "--output-file"]),
+                ArgumentParserSpec.Argument(keys=["-i", "--input-file"]),
             ]
 
         return ArgumentParserSpec(
@@ -77,29 +77,29 @@ class Test_ArgumentSpecParser(unittest.TestCase):
 class Test_ArgumentSpecParser_Argument(unittest.TestCase):
 
     def test___init___PositionalArgs(self):
-        names = object()
-        x = ArgumentParserSpec.Argument(names)
-        self.assertIs(names, x.names)
+        keys = object()
+        x = ArgumentParserSpec.Argument(keys)
+        self.assertIs(keys, x.keys)
 
     def test___init___KeywordArgs(self):
-        names = object()
-        x = ArgumentParserSpec.Argument(names=names)
-        self.assertIs(names, x.names)
+        keys = object()
+        x = ArgumentParserSpec.Argument(keys=keys)
+        self.assertIs(keys, x.keys)
 
     def test___eq___Equal(self):
         x1 = self.new_Argument()
         x2 = self.new_Argument()
         self.assertTrue(x1 == x2)
 
-    def test___eq___names_Missing(self):
+    def test___eq___keys_Missing(self):
         x1 = self.new_Argument()
         x2 = self.new_Argument()
-        del x2.names
+        del x2.keys
         self.assertFalse(x1 == x2)
 
-    def test___eq___names_Unequal(self):
+    def test___eq___keys_Unequal(self):
         x1 = self.new_Argument()
-        x2 = self.new_Argument(names=[])
+        x2 = self.new_Argument(keys=[])
         self.assertFalse(x1 == x2)
 
     def test___ne___Equal(self):
@@ -107,21 +107,21 @@ class Test_ArgumentSpecParser_Argument(unittest.TestCase):
         x2 = self.new_Argument()
         self.assertFalse(x1 != x2)
 
-    def test___ne___names_Missing(self):
+    def test___ne___keys_Missing(self):
         x1 = self.new_Argument()
         x2 = self.new_Argument()
-        del x2.names
+        del x2.keys
         self.assertTrue(x1 != x2)
 
-    def test___ne___names_Unequal(self):
+    def test___ne___keys_Unequal(self):
         x1 = self.new_Argument()
-        x2 = self.new_Argument(names=[])
+        x2 = self.new_Argument(keys=[])
         self.assertTrue(x1 != x2)
 
-    def new_Argument(self, names=None):
-        if names is None:
-            names = ["-o", "--output-file"]
+    def new_Argument(self, keys=None):
+        if keys is None:
+            keys = ["-o", "--output-file"]
 
         return ArgumentParserSpec.Argument(
-            names=names,
+            keys=keys,
         )

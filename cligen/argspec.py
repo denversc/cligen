@@ -41,21 +41,21 @@ class ArgumentParserSpec:
 
     class Argument:
 
-        def __init__(self, names):
+        def __init__(self, keys):
             """
             Initializes a new instance of this class.
-            *names* must be a list or tuple of strings, each of which defines the names that map to
+            *keys* must be a list or tuple of strings, each of which defines the keys that map to
             this argument when specified on the command line (e.g. ["-o", "--output-file"]).
             """
-            self.names = names
+            self.keys = keys
 
         def __eq__(self, other):
             try:
-                other_names = other.names
+                other_keys = other.keys
             except AttributeError:
                 return False
             else:
-                return self.names == other_names
+                return self.keys == other_keys
 
         def __ne__(self, other):
             return not self.__eq__(other)
