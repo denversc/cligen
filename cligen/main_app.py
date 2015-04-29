@@ -17,6 +17,8 @@
 The "main application" class for the cligen command-line utility.
 """
 
+from cligen.argspec_xml_parser import ArgumentSpecParser
+
 
 class CligenApplication:
 
@@ -28,3 +30,19 @@ class CligenApplication:
         self.inline = inline
         self.encoding = encoding
         self.newline = newline
+
+    def run(self):
+        argspec = self.read_source_file()
+
+    def read_source_file(self):
+        parser = ArgumentSpecParser()
+        try:
+            return parser.parse_file(self.source_file_path)
+        except IOError as e:
+            raise self.Error("reading file failed: {} ({})".format(
+                self.source_file_path, e.strerror))
+        except parser.Error as e:
+            raise self.Error("parsing file failed: {} ({})".format(self.source_file_path, e))
+
+    class Error(Exception):
+        pass

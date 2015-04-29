@@ -44,6 +44,14 @@ def run():
             print("ERROR: {}".format(e), file=sys.stderr)
         return e.exit_code
 
+    try:
+        app.run()
+    except app.Error as e:
+        print("ERROR: {}".format(e), file=sys.stderr)
+        return 1
+
+    return 0
+
 
 if __name__ == "__main__":
     main()
