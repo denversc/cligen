@@ -17,16 +17,20 @@
 Python target language support for cligen.
 """
 
-from cligen.targets import TargetLanguageBase
+from cligen.targets import Jinja2TargetLanguageBase
 
 
-class PythonTargetLanguage(TargetLanguageBase):
+class PythonTargetLanguage(Jinja2TargetLanguageBase):
 
     def __init__(self):
+        output_file = self.OutputFileInfo(
+            name="source file",
+            default_value="cligen.py",
+            template_name="python.py",
+        )
+
         super().__init__(
             key="python",
             name="python",
-            output_files=(
-                self.OutputFileInfo(name="source file", default_value="cligen.py"),
-            ),
+            output_files=(output_file,),
         )
