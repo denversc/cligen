@@ -59,6 +59,9 @@ class ArgumentParser(object):
             """
             Prints the parsed command-line arguments stored in this object, one per line.
             This method is primarily intended for debugging purposes
+
+            *f* must be a file object opened in write-text mode to which the output will be written;
+            may be None (the default) to use sys.stdout.
             """
 
     class Error(Exception):
