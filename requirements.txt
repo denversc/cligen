@@ -1,1 +1,2 @@
 fakeable==1.0.3
+jinja2==2.7.3

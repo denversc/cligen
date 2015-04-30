@@ -18,6 +18,7 @@ Registry for supported target languages for cligen.
 """
 
 import fakeable
+import jinja2
 
 
 class TargetRegistry(metaclass=fakeable.Fakeable):
@@ -55,6 +56,23 @@ class TargetLanguageBase:
         self.name = name
         self.output_files = output_files
 
+    def generate(self, argspec, output_file_paths, encoding, newline):
+        """
+        Generates the output files based on the given input.
+        *argspec* must be a cligen.argspec.ArgumentParserSpec object that specifies the command-
+        line arguments that the generated code is to parse.
+        *output_file_paths* the paths of the output files to write, corresponding to the
+        output_files list that was given to __init__(); if the length of this list is zero then
+        the default filenames will be used for all output files.
+        *encoding* must be a string whose value is the character encoding to use in the generated
+        files (e.g. "utf8", "ascii").
+        *newline* must be a string whose value is the character sequence to use to create a new
+        line in the output file; may be None, in which case the newline sequence will be detected
+        from the output file, if it already exists; if it does not exist then \n will be used.
+        Raises self.Error if an error occurs.
+        """
+        raise NotImplementedError()
+
     class OutputFileInfo:
 
         def __init__(self, name, default_value):
@@ -67,3 +85,58 @@ class TargetLanguageBase:
             """
             self.name = name
             self.default_value = default_value
+
+    class Error(Exception):
+        pass
+
+
+class Jinja2TargetLanguageBase(TargetLanguageBase):
+    """
+    An implementation of TargetLanguageBase that generates output files from Jinja2 templates.
+    The output_files specified to __init__() must be Jinja2TargetLanguageBase.OutputFileInfo
+    objects.
+    """
+
+    def generate(self, argspec, output_file_paths, encoding, newline):
+        if newline is None:
+            # TODO: try and determine the newline used in the output file
+            newline = "\n"
+
+        env = jinja2.Environment(
+            newline_sequence=newline,
+            keep_trailing_newline=True,
+            autoescape=False,
+            lstrip_blocks=True,
+            trim_blocks=True,
+            undefined=jinja2.StrictUndefined,
+            loader=jinja2.PackageLoader("cligen"),
+        )
+
+        output_files = tuple(self.output_files)
+        output_file_paths = tuple(output_file_paths)
+        if len(output_file_paths) == 0:
+            output_file_paths = tuple(x.default_value for x in output_files)
+        elif len(output_file_paths) != len(output_files):
+            raise RuntimeError("invalid output_file_paths length: {} (expected {})".format(
+                len(output_file_paths), len(output_files)))
+
+        for (output_file_path, output_file) in zip(output_file_paths, output_files):
+            template_name = output_file.template_name
+            self._generate(env, template_name, argspec, output_file_path, encoding)
+
+    def _generate(self, env, template_name, argspec, output_file_path, output_file_encoding):
+        template = env.get_template(template_name)
+        generated_code = template.render(argspec=argspec)
+
+        try:
+            with open(output_file_path, "wt", encoding=output_file_encoding) as f:
+                f.write(generated_code)
+        except IOError as e:
+            raise self.Error("error writing generated code to file: {} ({})".format(
+                output_file_path, e.strerror))
+
+    class OutputFileInfo(TargetLanguageBase.OutputFileInfo):
+
+        def __init__(self, name, default_value, template_name):
+            super().__init__(name=name, default_value=default_value)
+            self.template_name = template_name

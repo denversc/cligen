@@ -1,0 +1,4 @@
+The arguments are:
+{% for arg in argspec.arguments %}
+Argument {{ loop.index }}: {{ arg.keys|join("/") }}
+{% endfor %}
