@@ -1,0 +1,6 @@
+test2.txt begin
+The arguments are:
+{% for arg in argspec.arguments %}
+Argument {{ loop.index }}: {{ arg.keys|join("/") }}
+{% endfor %}
+test2.txt end

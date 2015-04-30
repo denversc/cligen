@@ -129,9 +129,7 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
     def generate(self, argspec, output_file_paths, encoding, newline):
         output_files = tuple(self.output_files)
         output_file_paths = tuple(output_file_paths)
-        if len(output_file_paths) == 0:
-            output_file_paths = tuple(x.default_value for x in output_files)
-        elif len(output_file_paths) != len(output_files):
+        if len(output_file_paths) != len(output_files):
             raise RuntimeError("len(output_file_paths)=={} (expected {})".format(
                 len(output_file_paths), len(output_files)))
 

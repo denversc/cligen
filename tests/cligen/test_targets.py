@@ -115,9 +115,20 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             "ordinal not in range(128))"
         )
 
-    def test_OutputFiles_IncorrectLength(self):
+    def test_OutputFiles_NoOutputFilesSpecified(self):
+        self.assert_generate_raises_RuntimeError(
+            output_file_paths=[],
+            expected_message="len(output_file_paths)==0 (expected 1)",
+        )
+
+    def test_OutputFiles_TooManyOutputFilesSpecified(self):
+        self.assert_generate_raises_RuntimeError(
+            output_file_paths=[1, 2],
+            expected_message="len(output_file_paths)==2 (expected 1)",
+        )
+
+    def assert_generate_raises_RuntimeError(self, output_file_paths, expected_message):
         x = self.sample_Jinja2TargetLanguageBase()
-        output_file_paths = [1, 2]
         with self.assertRaises(RuntimeError) as cm:
             x.generate(
                 argspec=None,
@@ -127,8 +138,35 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             )
 
         actual_message = "{}".format(cm.exception)
-        expected_message = "len(output_file_paths)==2 (expected 1)"
         self.assertEqual(actual_message, expected_message)
+
+    def test_OutputFiles_MultipleOutputFiles(self):
+        x = self.sample_Jinja2TargetLanguageBase_MultipleOutputFiles()
+        argspec = self.sample_argspec()
+
+        dir_path = self.create_temp_dir()
+        output_file_path_1 = os.path.join(dir_path, "test1.txt")
+        output_file_path_2 = os.path.join(dir_path, "test2.txt")
+        output_file_paths=[output_file_path_1, output_file_path_2]
+
+        x.generate(
+            argspec=argspec,
+            output_file_paths=output_file_paths,
+            encoding="utf8",
+            newline="\n",
+        )
+
+        with open(output_file_path_1, "rb") as f:
+            output_file_1_bytes = f.read()
+        actual_output_file_1_contents = output_file_1_bytes.decode("utf8")
+        expected_output_file_1_contents = self.generated_test_txt()
+        self.assertEqual(actual_output_file_1_contents, expected_output_file_1_contents)
+
+        with open(output_file_path_2, "rb") as f:
+            output_file_2_bytes = f.read()
+        actual_output_file_2_contents = output_file_2_bytes.decode("utf8")
+        expected_output_file_2_contents = self.generated_test2_txt()
+        self.assertEqual(actual_output_file_2_contents, expected_output_file_2_contents)
 
     def assert_generate_ok(
             self,
@@ -256,11 +294,42 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
         )
 
     @staticmethod
+    def sample_Jinja2TargetLanguageBase_MultipleOutputFiles():
+        output_file_1 = Jinja2TargetLanguageBase.OutputFileInfo(
+            name="test1",
+            default_value="test1.generated.txt",
+            template_name="test.txt",
+        )
+        output_file_2 = Jinja2TargetLanguageBase.OutputFileInfo(
+            name="test2",
+            default_value="test2.generated.txt",
+            template_name="test2.txt",
+        )
+        return Jinja2TargetLanguageBase(
+            key="test",
+            name="test",
+            output_files=[output_file_1, output_file_2],
+        )
+
+    @staticmethod
     def generated_test_txt(newline=None):
         s = (
             "The arguments are:\n"
             "Argument 1: -i/--input-file\n"
             "Argument 2: -o/--output-file\n"
+        )
+        if newline is not None:
+            s = s.replace("\n", newline)
+        return s
+
+    @staticmethod
+    def generated_test2_txt(newline=None):
+        s = (
+            "test2.txt begin\n"
+            "The arguments are:\n"
+            "Argument 1: -i/--input-file\n"
+            "Argument 2: -o/--output-file\n"
+            "test2.txt end\n"
         )
         if newline is not None:
             s = s.replace("\n", newline)
