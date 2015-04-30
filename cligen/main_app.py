@@ -33,6 +33,7 @@ class CligenApplication:
 
     def run(self):
         argspec = self.read_source_file()
+        self.generate_output_files(argspec)
 
     def read_source_file(self):
         parser = ArgumentSpecParser()
@@ -43,6 +44,17 @@ class CligenApplication:
                 self.source_file_path, e.strerror))
         except parser.Error as e:
             raise self.Error("parsing file failed: {} ({})".format(self.source_file_path, e))
+
+    def generate_output_files(self, argspec):
+        try:
+            self.target_language.generate(
+                argspec=argspec,
+                output_file_paths=self.output_file_paths,
+                encoding=self.encoding,
+                newline=self.newline,
+            )
+        except self.target_language.Error as e:
+            raise self.Error("{}".format(e))
 
     class Error(Exception):
         pass
