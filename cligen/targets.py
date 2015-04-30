@@ -127,10 +127,11 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
     def _generate(self, env, template_name, argspec, output_file_path, output_file_encoding):
         template = env.get_template(template_name)
         generated_code = template.render(argspec=argspec)
+        generated_code_bytes = generated_code.encode(output_file_encoding)
 
         try:
-            with open(output_file_path, "wt", encoding=output_file_encoding) as f:
-                f.write(generated_code)
+            with open(output_file_path, "wb") as f:
+                f.write(generated_code_bytes)
         except IOError as e:
             raise self.Error("error writing generated code to file: {} ({})".format(
                 output_file_path, e.strerror))

@@ -24,7 +24,21 @@ from cligen.argspec import ArgumentParserSpec
 
 class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
 
-    def test_EncodingUTF8_NewlineUnix_OutputFileDoesNotExist(self):
+    def test_NewlineUnix(self):
+        self.assert_generated_code(newline="\n")
+
+    def test_NewlineMac(self):
+        self.assert_generated_code(newline="\r")
+
+    def test_NewlineWindows(self):
+        self.assert_generated_code(newline="\r\n")
+
+    def assert_generated_code(self, encoding=None, newline=None):
+        if encoding is None:
+            encoding = "utf8"
+        if newline is None:
+            newline = "\n"
+
         x = self.sample_Jinja2TargetLanguageBase()
         argspec = self.sample_argspec()
         dir_path = self.create_temp_dir()
@@ -32,19 +46,16 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
         x.generate(
             argspec=argspec,
             output_file_paths=[output_file_path],
-            encoding="utf8",
-            newline="\n",
+            encoding=encoding,
+            newline=newline,
         )
 
-        with open(output_file_path, "rt", encoding="utf8") as f:
-            generated_code = f.read()
+        with open(output_file_path, "rb") as f:
+            actual_generated_code_bytes = f.read()
 
-        self.assertEqual(
-            generated_code,
-            "The arguments are:\n"
-            "Argument 1: -i/--input-file\n"
-            "Argument 2: -o/--output-file\n"
-        )
+        actual_generated_code = actual_generated_code_bytes.decode(encoding)
+        expected_generated_code = self.generated_test_txt(newline=newline)
+        self.assertEqual(actual_generated_code, expected_generated_code)
 
     def create_temp_dir(self):
         path = tempfile.mkdtemp("Test_Jinja2TargetLanguageBase_generate")
@@ -69,3 +80,14 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             name="test",
             output_files=[output_file],
         )
+
+    @staticmethod
+    def generated_test_txt(newline=None):
+        s = (
+            "The arguments are:\n"
+            "Argument 1: -i/--input-file\n"
+            "Argument 2: -o/--output-file\n"
+        )
+        if newline is not None:
+            s = s.replace("\n", newline)
+        return s
