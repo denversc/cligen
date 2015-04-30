@@ -36,10 +36,10 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
     def test_NewlineWindows(self):
         self.assert_generate_ok(newline="\r\n")
 
-    def test_NewlineAutoDetect_FileNotFound(self):
+    def test_NewlineNone_FileNotFound(self):
         self.assert_generate_ok(newline=None, expected_newline=os.linesep)
 
-    def test_NewlineAutoDetect_FileCannotBeRead(self):
+    def test_NewlineNone_FileCannotBeRead(self):
         self.assert_generate_fail(
             newline=None,
             output_file_is_directory=True,
@@ -47,7 +47,7 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             "{output_file_path} (Is a directory)"
         )
 
-    def test_NewlineAutoDetect_FileDecodingFails(self):
+    def test_NewlineNone_FileDecodingFails(self):
         self.assert_generate_fail(
             newline=None,
             output_file_initial_bytes=b"\xc3\x28",
@@ -56,40 +56,43 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             "invalid continuation byte)"
         )
 
-    def test_NewlineAutoDetect_Unix(self):
+    def test_NewlineNone_Unix(self):
         self.assert_generate_ok(
             newline=None,
             expected_newline="\n",
             output_file_initial_contents="ab\ncd\n",
         )
 
-    def test_NewlineAutoDetect_Mac(self):
+    def test_NewlineNone_Mac(self):
         self.assert_generate_ok(
             newline=None,
             expected_newline="\r",
             output_file_initial_contents="ab\rcd\r",
         )
 
-    def test_NewlineAutoDetect_Windows(self):
+    def test_NewlineNone_Windows(self):
         self.assert_generate_ok(
             newline=None,
             expected_newline="\r\n",
             output_file_initial_contents="ab\r\ncd\r\n",
         )
 
-    def test_NewlineAutoDetect_ConfoundingSpaces(self):
+    def test_NewlineNone_ConfoundingSpaces(self):
         self.assert_generate_ok(
             newline=None,
             expected_newline="\r\n",
             output_file_initial_contents="This line has trailing spaces   \r\nLine 2   \r\n",
         )
 
-    def test_NewlineAutoDetect_InconsistentNewlines(self):
+    def test_NewlineNone_InconsistentNewlines(self):
         self.assert_generate_ok(
             newline=None,
             expected_newline="\r\n",
             output_file_initial_contents="Windows\r\nMac\rLinux\n",
         )
+
+    def test_Encoding_None(self):
+        self.assert_generate_ok(encoding=None, effective_encoding="utf8")
 
     def test_Encoding_UTF8(self):
         self.assert_generate_ok(encoding="utf8")
@@ -114,6 +117,26 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             r"{output_file_path} ('ascii' codec can't encode character '\xe9' in position 1: "
             "ordinal not in range(128))"
         )
+
+    def test_OutputFiles_None(self):
+        dir_path = self.create_temp_dir()
+        old_cwd = os.getcwd()
+        self.addCleanup(os.chdir, old_cwd)
+        os.chdir(dir_path)
+
+        x = self.sample_Jinja2TargetLanguageBase()
+        x.generate(
+            argspec=self.sample_argspec(),
+            output_file_paths=None,
+            encoding="utf8",
+            newline="\n",
+        )
+
+        with open("test.generated.txt", "rb") as f:
+            output_file_bytes = f.read()
+        actual_output_file_contents = output_file_bytes.decode("utf8")
+        expected_output_file_contents = self.generated_test_txt()
+        self.assertEqual(actual_output_file_contents, expected_output_file_contents)
 
     def test_OutputFiles_NoOutputFilesSpecified(self):
         self.assert_generate_raises_RuntimeError(
@@ -147,7 +170,7 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
         dir_path = self.create_temp_dir()
         output_file_path_1 = os.path.join(dir_path, "test1.txt")
         output_file_path_2 = os.path.join(dir_path, "test2.txt")
-        output_file_paths=[output_file_path_1, output_file_path_2]
+        output_file_paths = [output_file_path_1, output_file_path_2]
 
         x.generate(
             argspec=argspec,
@@ -168,6 +191,39 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
         expected_output_file_2_contents = self.generated_test2_txt()
         self.assertEqual(actual_output_file_2_contents, expected_output_file_2_contents)
 
+    def test_OutputFiles_MultipleOutputFilesWithDifferentNewlines_NewlineNone(self):
+        x = self.sample_Jinja2TargetLanguageBase_MultipleOutputFiles()
+        argspec = self.sample_argspec()
+
+        dir_path = self.create_temp_dir()
+        output_file_path_1 = os.path.join(dir_path, "test1.txt")
+        output_file_path_2 = os.path.join(dir_path, "test2.txt")
+        output_file_paths = [output_file_path_1, output_file_path_2]
+
+        with open(output_file_path_1, "wb") as f:
+            f.write("line 1\n line 2\n".encode("utf8"))
+        with open(output_file_path_2, "wb") as f:
+            f.write("line 1\r\n line 2\r\n".encode("utf8"))
+
+        x.generate(
+            argspec=argspec,
+            output_file_paths=output_file_paths,
+            encoding="utf8",
+            newline=None,
+        )
+
+        with open(output_file_path_1, "rb") as f:
+            output_file_1_bytes = f.read()
+        actual_output_file_1_contents = output_file_1_bytes.decode("utf8")
+        expected_output_file_1_contents = self.generated_test_txt(newline="\n")
+        self.assertEqual(actual_output_file_1_contents, expected_output_file_1_contents)
+
+        with open(output_file_path_2, "rb") as f:
+            output_file_2_bytes = f.read()
+        actual_output_file_2_contents = output_file_2_bytes.decode("utf8")
+        expected_output_file_2_contents = self.generated_test2_txt(newline="\r\n")
+        self.assertEqual(actual_output_file_2_contents, expected_output_file_2_contents)
+
     def assert_generate_ok(
             self,
             x=DEFAULT_VALUE,
@@ -176,6 +232,7 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             expected_newline=DEFAULT_VALUE,
             output_file_initial_contents=DEFAULT_VALUE,
             expected_generated_code=DEFAULT_VALUE,
+            effective_encoding=DEFAULT_VALUE,
     ):
         if x is self.DEFAULT_VALUE:
             x = self.sample_Jinja2TargetLanguageBase()
@@ -187,6 +244,8 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             expected_newline = newline
         if output_file_initial_contents is self.DEFAULT_VALUE:
             output_file_initial_contents = None
+        if effective_encoding is self.DEFAULT_VALUE:
+            effective_encoding = encoding
 
         dir_path = self.create_temp_dir()
         output_file_path = os.path.join(dir_path, "test.txt")
@@ -207,7 +266,7 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
 
         if expected_generated_code is self.DEFAULT_VALUE:
             expected_generated_code = self.generated_test_txt(newline=expected_newline)
-        actual_generated_code = actual_generated_code_bytes.decode(encoding)
+        actual_generated_code = actual_generated_code_bytes.decode(effective_encoding)
         self.assertEqual(actual_generated_code, expected_generated_code)
 
     def assert_generate_fail(

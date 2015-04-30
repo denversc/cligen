@@ -65,17 +65,60 @@ class TargetLanguageBase:
         *argspec* must be a cligen.argspec.ArgumentParserSpec object that specifies the command-
         line arguments that the generated code is to parse.
         *output_file_paths* the paths of the output files to write, corresponding to the
-        output_files list that was given to __init__(); if the length of this list is zero then
-        the default filenames will be used for all output files.
+        output_files list that was given to __init__(); if None then the default filenames will be
+        used for all output files and will be written to the current directory.
         *encoding* must be a string whose value is the character encoding to use in the generated
-        files (e.g. "utf8", "ascii").
+        files (e.g. "utf8", "ascii"); may be None to use the default "utf8".
         *newline* must be a string whose value is the character sequence to use to create a new
         line in the output file; may be None, in which case the newline sequence will be detected
         from the output file, if it already exists; if it does not exist then the system default
         newline character sequence retrieved from os.linesep will be used.
         Raises self.Error if an error occurs.
         """
+        if encoding is None:
+            encoding = "utf8"
+        output_files = self._resolved_output_files(output_file_paths, encoding, newline)
+        output_files = tuple(output_files)
+        self._generate(argspec=argspec, encoding=encoding, output_files=output_files)
+
+    def _generate(self, argspec, encoding, output_files):
+        """
+        To be implemented by subclasses to generate the code.
+        This method is called by generate() after validating and resolving its arguments.
+        No arguments specified to this method will be None.
+
+        *argspec* is the value for the argument of the same name that was specified to generate().
+        *encoding* is a string whose value is the name of the character encoding to use in the
+        generated files.
+        *output_files* is an iterable of self._OutputFile objects representing the output files.
+        Raises self.Error if an error occurs.
+        """
         raise NotImplementedError()
+
+    def _resolved_output_files(self, output_file_paths, encoding, newline):
+        output_file_infos = tuple(self.output_files)
+
+        if output_file_paths is None:
+            output_file_paths = [x.default_value for x in output_file_infos]
+        else:
+            output_file_paths = tuple(output_file_paths)
+            if len(output_file_paths) != len(output_file_infos):
+                raise RuntimeError("len(output_file_paths)=={} (expected {})".format(
+                    len(output_file_paths), len(output_file_infos)))
+
+        for i in range(len(output_file_infos)):
+            path = output_file_paths[i]
+            info = output_file_infos[i]
+            if newline is not None:
+                cur_newline = newline
+            else:
+                cur_newline = self._detect_newline(path, encoding)
+
+            yield self._OutputFile(
+                path=path,
+                newline=cur_newline,
+                info=info,
+            )
 
     @classmethod
     def _detect_newline(cls, path, encoding):
@@ -115,6 +158,27 @@ class TargetLanguageBase:
             self.name = name
             self.default_value = default_value
 
+    class _OutputFile:
+        """
+        Stores information about an output file.
+        Instances of this class will be specified to _generate() by generate().
+        """
+
+        def __init__(self, path, newline, info):
+            """
+            Initializes a new instance of this class.
+
+            *path* must be a string whose value is the path of the output file to generate;
+            must not be None.
+            *newline* must be a string whose value is the newline character sequence to generate
+            in the output file; must not be None.
+            *info* must be a OutputFileInfo object that is the output file to which this object
+            corresponds; must not be None.
+            """
+            self.path = path
+            self.newline = newline
+            self.info = info
+
     class Error(Exception):
         pass
 
@@ -126,13 +190,7 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
     objects.
     """
 
-    def generate(self, argspec, output_file_paths, encoding, newline):
-        output_files = tuple(self.output_files)
-        output_file_paths = tuple(output_file_paths)
-        if len(output_file_paths) != len(output_files):
-            raise RuntimeError("len(output_file_paths)=={} (expected {})".format(
-                len(output_file_paths), len(output_files)))
-
+    def _generate(self, argspec, encoding, output_files):
         env = jinja2.Environment(
             keep_trailing_newline=True,
             autoescape=False,
@@ -142,16 +200,19 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
             loader=jinja2.PackageLoader("cligen"),
         )
 
-        for (output_file_path, output_file) in zip(output_file_paths, output_files):
-            template_name = output_file.template_name
-            self._generate(env, template_name, argspec, output_file_path, encoding, newline)
+        for output_file in output_files:
+            self._generate_output_file(
+                argspec=argspec,
+                env=env,
+                template_name=output_file.info.template_name,
+                output_file_path=output_file.path,
+                output_file_newline=output_file.newline,
+                output_file_encoding=encoding,
+            )
 
-    def _generate(
-            self, env, template_name, argspec, output_file_path, output_file_encoding,
+    def _generate_output_file(
+            self, argspec, env, template_name, output_file_path, output_file_encoding,
             output_file_newline):
-        if output_file_newline is None:
-            output_file_newline = self._detect_newline(output_file_path, output_file_encoding)
-
         template = env.get_template(template_name)
         output = template.render(argspec=argspec)
         output_fixed_newlines = output.replace("\n", output_file_newline)
