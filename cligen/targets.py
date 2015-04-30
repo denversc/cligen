@@ -127,6 +127,14 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
     """
 
     def generate(self, argspec, output_file_paths, encoding, newline):
+        output_files = tuple(self.output_files)
+        output_file_paths = tuple(output_file_paths)
+        if len(output_file_paths) == 0:
+            output_file_paths = tuple(x.default_value for x in output_files)
+        elif len(output_file_paths) != len(output_files):
+            raise RuntimeError("len(output_file_paths)=={} (expected {})".format(
+                len(output_file_paths), len(output_files)))
+
         env = jinja2.Environment(
             keep_trailing_newline=True,
             autoescape=False,
@@ -135,14 +143,6 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
             undefined=jinja2.StrictUndefined,
             loader=jinja2.PackageLoader("cligen"),
         )
-
-        output_files = tuple(self.output_files)
-        output_file_paths = tuple(output_file_paths)
-        if len(output_file_paths) == 0:
-            output_file_paths = tuple(x.default_value for x in output_files)
-        elif len(output_file_paths) != len(output_files):
-            raise RuntimeError("invalid output_file_paths length: {} (expected {})".format(
-                len(output_file_paths), len(output_files)))
 
         for (output_file_path, output_file) in zip(output_file_paths, output_files):
             template_name = output_file.template_name

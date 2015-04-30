@@ -115,6 +115,21 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             "ordinal not in range(128))"
         )
 
+    def test_OutputFiles_IncorrectLength(self):
+        x = self.sample_Jinja2TargetLanguageBase()
+        output_file_paths = [1, 2]
+        with self.assertRaises(RuntimeError) as cm:
+            x.generate(
+                argspec=None,
+                encoding=None,
+                newline=None,
+                output_file_paths=output_file_paths,
+            )
+
+        actual_message = "{}".format(cm.exception)
+        expected_message = "len(output_file_paths)==2 (expected 1)"
+        self.assertEqual(actual_message, expected_message)
+
     def assert_generate_ok(
             self,
             x=DEFAULT_VALUE,
