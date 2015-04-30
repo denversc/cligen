@@ -17,6 +17,9 @@
 Registry for supported target languages for cligen.
 """
 
+import os
+import re
+
 import fakeable
 import jinja2
 
@@ -68,10 +71,36 @@ class TargetLanguageBase:
         files (e.g. "utf8", "ascii").
         *newline* must be a string whose value is the character sequence to use to create a new
         line in the output file; may be None, in which case the newline sequence will be detected
-        from the output file, if it already exists; if it does not exist then \n will be used.
+        from the output file, if it already exists; if it does not exist then the system default
+        newline character sequence retrieved from os.linesep will be used.
         Raises self.Error if an error occurs.
         """
         raise NotImplementedError()
+
+    @classmethod
+    def _detect_newline(cls, path, encoding):
+        """
+        Helper method for use by subclasses to determine the newline character sequence in use in
+        a given file.  If the file does not exist or contains no newline character sequences then
+        os.linesep is returned.  If the file cannot be read then Error is raised.
+        """
+        try:
+            with open(path, "rt", encoding=encoding, newline="") as f:
+                for line in f:
+                    match = re.search(r"([\r\n]+$)", line)
+                    if match is not None:
+                        newline = match.group(1)
+                        return newline
+        except FileNotFoundError:
+            return os.linesep
+        except IOError as e:
+            raise cls.Error(
+                "unable to determine newline character sequence in file: {} ({})".format(
+                    path, e.strerror))
+        except UnicodeDecodeError as e:
+            raise cls.Error(
+                "unable to decode characters from file using encoding {}: {} ({})".format(
+                    encoding, path, e))
 
     class OutputFileInfo:
 
@@ -98,12 +127,7 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
     """
 
     def generate(self, argspec, output_file_paths, encoding, newline):
-        if newline is None:
-            # TODO: try and determine the newline used in the output file
-            newline = "\n"
-
         env = jinja2.Environment(
-            newline_sequence=newline,
             keep_trailing_newline=True,
             autoescape=False,
             lstrip_blocks=True,
@@ -122,16 +146,22 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
 
         for (output_file_path, output_file) in zip(output_file_paths, output_files):
             template_name = output_file.template_name
-            self._generate(env, template_name, argspec, output_file_path, encoding)
+            self._generate(env, template_name, argspec, output_file_path, encoding, newline)
 
-    def _generate(self, env, template_name, argspec, output_file_path, output_file_encoding):
+    def _generate(
+            self, env, template_name, argspec, output_file_path, output_file_encoding,
+            output_file_newline):
+        if output_file_newline is None:
+            output_file_newline = self._detect_newline(output_file_path, output_file_encoding)
+
         template = env.get_template(template_name)
-        generated_code = template.render(argspec=argspec)
-        generated_code_bytes = generated_code.encode(output_file_encoding)
+        output = template.render(argspec=argspec)
+        output_fixed_newlines = output.replace("\n", output_file_newline)
+        output_fixed_newlines_bytes = output_fixed_newlines.encode(output_file_encoding)
 
         try:
             with open(output_file_path, "wb") as f:
-                f.write(generated_code_bytes)
+                f.write(output_fixed_newlines_bytes)
         except IOError as e:
             raise self.Error("error writing generated code to file: {} ({})".format(
                 output_file_path, e.strerror))
