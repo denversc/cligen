@@ -157,7 +157,13 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
         template = env.get_template(template_name)
         output = template.render(argspec=argspec)
         output_fixed_newlines = output.replace("\n", output_file_newline)
-        output_fixed_newlines_bytes = output_fixed_newlines.encode(output_file_encoding)
+        try:
+            output_fixed_newlines_bytes = output_fixed_newlines.encode(output_file_encoding)
+        except UnicodeEncodeError as e:
+            raise self.Error(
+                "unable to encode generated code using encoding {}: {} ({})".format(
+                    output_file_encoding, output_file_path, e
+                ))
 
         try:
             with open(output_file_path, "wb") as f:

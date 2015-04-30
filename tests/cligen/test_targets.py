@@ -91,13 +91,41 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             output_file_initial_contents="Windows\r\nMac\rLinux\n",
         )
 
+    def test_Encoding_UTF8(self):
+        self.assert_generate_ok(encoding="utf8")
+
+    def test_Encoding_UTF16(self):
+        self.assert_generate_ok(encoding="utf16")
+
+    def test_Encoding_ASCII(self):
+        self.assert_generate_ok(encoding="ascii")
+
+    def test_Encoding_UTF8_SpecialChars(self):
+        x = self.sample_Jinja2TargetLanguageBase_nonascii()
+        expected_generated_code = self.generated_test_nonascii_txt()
+        self.assert_generate_ok(x=x, expected_generated_code=expected_generated_code)
+
+    def test_Encoding_ASCII_SpecialChars(self):
+        x = self.sample_Jinja2TargetLanguageBase_nonascii()
+        self.assert_generate_fail(
+            x=x,
+            encoding="ascii",
+            expected_exception_message="unable to encode generated code using encoding ascii: "
+            r"{output_file_path} ('ascii' codec can't encode character '\xe9' in position 1: "
+            "ordinal not in range(128))"
+        )
+
     def assert_generate_ok(
             self,
+            x=DEFAULT_VALUE,
             encoding=DEFAULT_VALUE,
             newline=DEFAULT_VALUE,
             expected_newline=DEFAULT_VALUE,
             output_file_initial_contents=DEFAULT_VALUE,
+            expected_generated_code=DEFAULT_VALUE,
     ):
+        if x is self.DEFAULT_VALUE:
+            x = self.sample_Jinja2TargetLanguageBase()
         if encoding is self.DEFAULT_VALUE:
             encoding = "utf8"
         if newline is self.DEFAULT_VALUE:
@@ -113,7 +141,6 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
             with open(output_file_path, "wb") as f:
                 f.write(output_file_initial_contents.encode(encoding))
 
-        x = self.sample_Jinja2TargetLanguageBase()
         argspec = self.sample_argspec()
         x.generate(
             argspec=argspec,
@@ -125,18 +152,22 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
         with open(output_file_path, "rb") as f:
             actual_generated_code_bytes = f.read()
 
+        if expected_generated_code is self.DEFAULT_VALUE:
+            expected_generated_code = self.generated_test_txt(newline=expected_newline)
         actual_generated_code = actual_generated_code_bytes.decode(encoding)
-        expected_generated_code = self.generated_test_txt(newline=expected_newline)
         self.assertEqual(actual_generated_code, expected_generated_code)
 
     def assert_generate_fail(
             self,
+            x=DEFAULT_VALUE,
             encoding=DEFAULT_VALUE,
             newline=DEFAULT_VALUE,
             expected_exception_message=None,
             output_file_is_directory=DEFAULT_VALUE,
             output_file_initial_bytes=DEFAULT_VALUE,
     ):
+        if x is self.DEFAULT_VALUE:
+            x = self.sample_Jinja2TargetLanguageBase()
         if encoding is self.DEFAULT_VALUE:
             encoding = "utf8"
         if newline is self.DEFAULT_VALUE:
@@ -146,7 +177,6 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
         if output_file_initial_bytes is self.DEFAULT_VALUE:
             output_file_initial_bytes = None
 
-        x = self.sample_Jinja2TargetLanguageBase()
         argspec = self.sample_argspec()
 
         dir_path = self.create_temp_dir()
@@ -198,12 +228,32 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
         )
 
     @staticmethod
+    def sample_Jinja2TargetLanguageBase_nonascii():
+        output_file = Jinja2TargetLanguageBase.OutputFileInfo(
+            name="test_nonascii",
+            default_value="test.nonascii.generated.txt",
+            template_name="test.nonascii.txt",
+        )
+        return Jinja2TargetLanguageBase(
+            key="test_nonascii",
+            name="test_nonascii",
+            output_files=[output_file],
+        )
+
+    @staticmethod
     def generated_test_txt(newline=None):
         s = (
             "The arguments are:\n"
             "Argument 1: -i/--input-file\n"
             "Argument 2: -o/--output-file\n"
         )
+        if newline is not None:
+            s = s.replace("\n", newline)
+        return s
+
+    @staticmethod
+    def generated_test_nonascii_txt(newline=None):
+        s = "Héllô\n"
         if newline is not None:
             s = s.replace("\n", newline)
         return s
