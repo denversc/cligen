@@ -206,6 +206,13 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
         """
         return self._largest_len_in(arg.keys)
 
+    def joined_keys(self, arg):
+        """
+        Returns a string whose value is all keys of the given argument with "/" between them.
+        For example: -i/--input-file
+        """
+        return "/".join(arg.keys)
+
     @staticmethod
     def _largest_len_in(seq):
         largest = None
@@ -227,6 +234,7 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
 
         env.filters["varname"] = self.argument_variable_name
         env.filters["most_descriptive_key"] = self.most_descriptive_key
+        env.filters["joined_keys"] = self.joined_keys
 
         for output_file in output_files:
             self._generate_output_file(
