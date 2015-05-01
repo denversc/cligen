@@ -193,15 +193,27 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
     def argument_variable_name(self, arg):
         """
         Convert an ArgumentParserSpec.Argument to a string that is to be used as the variable name
-        in generated code to store the argument's value.  This method may be overridden by
-        subclasses to customize this conversion.
+        in generated code to store the argument's value.
         """
-        variable_names = ["".join(s for s in x if s.isalnum()) for x in arg.keys]
-        longest_variable_name = None
-        for variable_name in variable_names:
-            if longest_variable_name is None or len(variable_name) > len(longest_variable_name):
-                longest_variable_name = variable_name
-        return longest_variable_name
+        variable_names = ("".join(s for s in x if s.isalnum()) for x in arg.keys)
+        return self._largest_len_in(variable_names)
+
+    def most_descriptive_key(self, arg):
+        """
+        Select and return the key of an ArgumentParserSpec.Argument object that is the most
+        descriptive.  This is the key that should be displayed if only one key can be displayed
+        for some reason.  This method simply returns the longest key
+        """
+        return self._largest_len_in(arg.keys)
+
+    @staticmethod
+    def _largest_len_in(seq):
+        largest = None
+        for s in seq:
+            if largest is None or len(s) > len(largest):
+                largest = s
+        return largest
+
 
     def _generate(self, argspec, encoding, output_files):
         env = jinja2.Environment(
@@ -214,6 +226,7 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
         )
 
         env.filters["varname"] = self.argument_variable_name
+        env.filters["most_descriptive_key"] = self.most_descriptive_key
 
         for output_file in output_files:
             self._generate_output_file(

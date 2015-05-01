@@ -374,8 +374,12 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
     def generated_test_txt(newline=None):
         s = (
             "The arguments are:\n"
-            "Argument 1: -i/--input-file <inputfile>\n"
-            "Argument 2: -o/--output-file <outputfile>\n"
+            "Argument 1: -i/--input-file\n"
+            "varname: inputfile\n"
+            "most_descriptive_key: --input-file\n"
+            "Argument 2: -o/--output-file\n"
+            "varname: outputfile\n"
+            "most_descriptive_key: --output-file\n"
         )
         if newline is not None:
             s = s.replace("\n", newline)

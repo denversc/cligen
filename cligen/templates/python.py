@@ -43,6 +43,7 @@ class ArgumentParser(object):
         application should terminate immediately as if successful, such as if the help
         documentation was printed in response to --help being specified.
         """
+        return self.ParsedArguments()
 
     class ParsedArguments(object):
         """
@@ -54,6 +55,9 @@ class ArgumentParser(object):
             """
             Initializes a new instance of this class, setting each attribute to its default value.
             """
+            {% for arg in argspec.arguments %}
+            self.{{ arg|varname }} = None
+            {% endfor %}
 
         def print(self, f=None):
             """
@@ -63,6 +67,12 @@ class ArgumentParser(object):
             *f* must be a file object opened in write-text mode to which the output will be written;
             may be None (the default) to use sys.stdout.
             """
+            if f is None:
+                f = sys.stdout
+
+            {% for arg in argspec.arguments %}
+            print("{{ arg|most_descriptive_key }} = {}".format(self.{{ arg|varname }}), file=f)
+            {% endfor %}
 
     class Error(Exception):
         """
