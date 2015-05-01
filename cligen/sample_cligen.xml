@@ -10,7 +10,7 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 
 <cligen xmlns="http://schemas.cligen.io/arguments">
     <argument>
-        <name>-i</name>
-        <name>--input-file</name>
+        <key>-i</key>
+        <key>--input-file</key>
     </argument>
 </cligen>
