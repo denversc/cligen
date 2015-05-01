@@ -20,15 +20,21 @@ from cligen.argspec import ArgumentParserSpec
 
 class Test_ArgumentSpecParser(unittest.TestCase):
 
+    DEFAULT_VALUE = object()
+
     def test___init___PositionalArgs(self):
         arguments = object()
-        x = ArgumentParserSpec(arguments)
+        help_argument = object()
+        x = ArgumentParserSpec(arguments, help_argument)
         self.assertIs(arguments, x.arguments)
+        self.assertIs(help_argument, x.help_argument)
 
     def test___init___KeywordArgs(self):
         arguments = object()
-        x = ArgumentParserSpec(arguments=arguments)
+        help_argument = object()
+        x = ArgumentParserSpec(arguments=arguments, help_argument=help_argument)
         self.assertIs(arguments, x.arguments)
+        self.assertIs(help_argument, x.help_argument)
 
     def test___eq___Equal(self):
         x1 = self.new_ArgumentParserSpec()
@@ -44,6 +50,17 @@ class Test_ArgumentSpecParser(unittest.TestCase):
     def test___eq___arguments_Unequal(self):
         x1 = self.new_ArgumentParserSpec()
         x2 = self.new_ArgumentParserSpec(arguments=[])
+        self.assertFalse(x1 == x2)
+
+    def test___eq___help_argument_Missing(self):
+        x1 = self.new_ArgumentParserSpec()
+        x2 = self.new_ArgumentParserSpec()
+        del x2.help_argument
+        self.assertFalse(x1 == x2)
+
+    def test___eq___help_argument_Unequal(self):
+        x1 = self.new_ArgumentParserSpec()
+        x2 = self.new_ArgumentParserSpec(help_argument=object())
         self.assertFalse(x1 == x2)
 
     def test___ne___Equal(self):
@@ -62,15 +79,32 @@ class Test_ArgumentSpecParser(unittest.TestCase):
         x2 = self.new_ArgumentParserSpec(arguments=[])
         self.assertTrue(x1 != x2)
 
-    def new_ArgumentParserSpec(self, arguments=None):
-        if arguments is None:
-            arguments = [
-                ArgumentParserSpec.Argument(keys=["-o", "--output-file"]),
-                ArgumentParserSpec.Argument(keys=["-i", "--input-file"]),
-            ]
+    def test___ne___help_argument_Missing(self):
+        x1 = self.new_ArgumentParserSpec()
+        x2 = self.new_ArgumentParserSpec()
+        del x2.help_argument
+        self.assertTrue(x1 != x2)
+
+    def test___ne___help_argument_Unequal(self):
+        x1 = self.new_ArgumentParserSpec()
+        x2 = self.new_ArgumentParserSpec(help_argument=object())
+        self.assertTrue(x1 != x2)
+
+    def new_ArgumentParserSpec(self, arguments=DEFAULT_VALUE, help_argument=DEFAULT_VALUE):
+        if arguments is self.DEFAULT_VALUE:
+            input_file_argument = ArgumentParserSpec.Argument(keys=["-i", "--input-file"])
+            output_file_argument = ArgumentParserSpec.Argument(keys=["-o", "--output-file"])
+            arguments = [input_file_argument, output_file_argument]
+
+            if help_argument is self.DEFAULT_VALUE:
+                help_argument = ArgumentParserSpec.Argument(keys=["-h", "--help"])
+
+            if help_argument is not None:
+                arguments.append(help_argument)
 
         return ArgumentParserSpec(
             arguments=arguments,
+            help_argument=help_argument,
         )
 
 

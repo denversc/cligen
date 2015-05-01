@@ -65,6 +65,7 @@ class ArgumentSpecParser:
 
         return ArgumentParserSpec(
             arguments=tuple(data.arguments),
+            help_argument=None,
         )
 
     def _parse_argument(self, root):

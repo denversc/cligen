@@ -20,21 +20,28 @@ A class that contains a specification for a command-line arguments parser produc
 
 class ArgumentParserSpec:
 
-    def __init__(self, arguments):
+    def __init__(self, arguments, help_argument):
         """
         Initializes a new instance of ArgumentParserSpec.
         *arguments* must be a list or tuple containing ArgumentParserSpec.Argument objects, and
         lists the arguments in this parser specification.
+        *help_argument* must be one of the arguments from the given *arguments* that,
+        when specified, will print the help screen; may be None if no help argument exists.
         """
         self.arguments = arguments
+        self.help_argument = help_argument
 
     def __eq__(self, other):
         try:
             other_arguments = other.arguments
+            other_help_argument = other.help_argument
         except AttributeError:
             return False
         else:
-            return self.arguments == other_arguments
+            return (
+                self.arguments == other_arguments
+                and self.help_argument == other_help_argument
+            )
 
     def __ne__(self, other):
         return not self.__eq__(other)

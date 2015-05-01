@@ -324,7 +324,7 @@ class Test_Jinja2TargetLanguageBase_generate(unittest.TestCase):
     def sample_argspec():
         arg1 = ArgumentParserSpec.Argument(keys=("-i", "--input-file"))
         arg2 = ArgumentParserSpec.Argument(keys=("-o", "--output-file"))
-        return ArgumentParserSpec(arguments=(arg1, arg2))
+        return ArgumentParserSpec(arguments=(arg1, arg2), help_argument=None)
 
     @staticmethod
     def sample_Jinja2TargetLanguageBase():
