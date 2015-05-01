@@ -190,6 +190,19 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
     objects.
     """
 
+    def argument_variable_name(self, arg):
+        """
+        Convert an ArgumentParserSpec.Argument to a string that is to be used as the variable name
+        in generated code to store the argument's value.  This method may be overridden by
+        subclasses to customize this conversion.
+        """
+        variable_names = ["".join(s for s in x if s.isalnum()) for x in arg.keys]
+        longest_variable_name = None
+        for variable_name in variable_names:
+            if longest_variable_name is None or len(variable_name) > len(longest_variable_name):
+                longest_variable_name = variable_name
+        return longest_variable_name
+
     def _generate(self, argspec, encoding, output_files):
         env = jinja2.Environment(
             keep_trailing_newline=True,
@@ -199,6 +212,8 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
             undefined=jinja2.StrictUndefined,
             loader=jinja2.PackageLoader("cligen"),
         )
+
+        env.filters["varname"] = self.argument_variable_name
 
         for output_file in output_files:
             self._generate_output_file(
