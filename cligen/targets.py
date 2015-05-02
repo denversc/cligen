@@ -221,7 +221,6 @@ class Jinja2TargetLanguageBase(TargetLanguageBase):
                 largest = s
         return largest
 
-
     def _generate(self, argspec, encoding, output_files):
         env = jinja2.Environment(
             keep_trailing_newline=True,
