@@ -39,12 +39,25 @@ class ArgumentParserSpec:
             return False
         else:
             return (
-                self.arguments == other_arguments
-                and self.help_argument == other_help_argument
+                self.arguments == other_arguments and
+                self.help_argument == other_help_argument
             )
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __str__(self):
+        argument_key_strs = ["/".join(x.keys) for x in self.arguments]
+        argument_keys_str = ", ".join(argument_key_strs)
+        return "[{}]".format(argument_keys_str)
+
+    def __repr__(self):
+        return (
+            "ArgumentParserSpec("
+            "arguments={0.arguments!r}, "
+            "help_argument={0.help_argument!r}"
+            ")"
+        ).format(self)
 
     class Argument:
 
@@ -67,8 +80,8 @@ class ArgumentParserSpec:
                 return False
             else:
                 return (
-                    self.keys == other_keys
-                    and self.help_text == other_help_text
+                    self.keys == other_keys and
+                    self.help_text == other_help_text
                 )
 
         def __ne__(self, other):
