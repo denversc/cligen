@@ -78,6 +78,18 @@ class ArgumentParserSpec:
             self.type = type
             self.help_text = help_text
 
+        def supports_values(self):
+            """
+            Returns whether or not this argument supports have values specified to it.
+            For example, if a valid argument format is "-o file.txt" then it *does* support
+            values because a value must follow the "-o" argument; however, if a valid argument
+            format is "--help" it does *not* support a value since nothing may follow "--help".
+            """
+            if self.type == self.TYPE_BUILTIN_HELP:
+                return False
+            else:
+                return True
+
         def __eq__(self, other):
             try:
                 other_keys = other.keys

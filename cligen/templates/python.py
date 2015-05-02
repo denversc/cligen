@@ -98,12 +98,16 @@ class ArgumentParser(object):
         else:
             return False
 
+        {% if arg.type == arg.TYPE_BUILTIN_HELP %}
+        self.print_help()
+        raise self.ExitApplicationSuccessfully()
+        {% else %}
         value = arg_iterator.next()
         if value is None:
             raise self.ArgumentValueMissing("{} must be followed by a value".format(arg))
-
         parsed_args.{{ arg|varname }} = value
         return True
+        {% endif %}
 
     {% endfor %}
 
@@ -131,7 +135,7 @@ class ArgumentParser(object):
     def get_invalid_args_lines(error):
         yield "ERROR: invalid command-line arguments: {}".format(error)
         {% if argspec.help_argument %}
-        yield "Run with {{ argspec.help_argument|joined_keys}} for help"
+        yield "Run with {{ argspec.help_argument|most_descriptive_key}} for help"
         {% endif %}
 
     def print_error(self, error, f=None):
@@ -147,6 +151,25 @@ class ArgumentParser(object):
         if message != none_message:
             yield "ERROR: {}".format(message)
 
+    def print_help(self, f=None):
+        if f is None:
+            f = self.stdout
+        lines = self.get_help_lines()
+        self.print_lines(lines, f)
+
+    @classmethod
+    def get_help_lines(cls):
+        yield "The following command-line arguments are recognized:"
+        {% for arg in argspec.arguments %}
+        yield ""
+        {% for key in arg.keys %}
+        yield "{{key}}"
+        {% endfor %}
+        {% if arg.help_text %}
+        yield "    {{arg.help_text}}"
+        {% endif %}
+        {% endfor %}
+
     class ParsedArguments(object):
         """
         Stores the parsed command-line arguments.
@@ -157,7 +180,7 @@ class ArgumentParser(object):
             """
             Initializes a new instance of this class, setting each attribute to its default value.
             """
-            {% for arg in argspec.arguments %}
+            {% for arg in argspec.arguments if arg.supports_values() %}
             self.{{ arg|varname }} = None
             {% endfor %}
 
@@ -172,7 +195,7 @@ class ArgumentParser(object):
             if f is None:
                 f = sys.stdout
 
-            {% for arg in argspec.arguments %}
+            {% for arg in argspec.arguments if arg.supports_values() %}
             print("{{ arg|most_descriptive_key }} = {}".format(self.{{ arg|varname }}), file=f)
             {% endfor %}
 
