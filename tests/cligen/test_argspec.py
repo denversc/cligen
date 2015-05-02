@@ -94,10 +94,12 @@ class Test_ArgumentSpecParser(unittest.TestCase):
         if arguments is self.DEFAULT_VALUE:
             input_file_argument = ArgumentParserSpec.Argument(
                 keys=["-i", "--input-file"],
+                type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                 help_text="The input file",
             )
             output_file_argument = ArgumentParserSpec.Argument(
                 keys=["-o", "--output-file"],
+                type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                 help_text="The output file",
             )
             arguments = [input_file_argument, output_file_argument]
@@ -105,6 +107,7 @@ class Test_ArgumentSpecParser(unittest.TestCase):
             if help_argument is self.DEFAULT_VALUE:
                 help_argument = ArgumentParserSpec.Argument(
                     keys=["-h", "--help"],
+                    type=ArgumentParserSpec.Argument.TYPE_BUILTIN_HELP,
                     help_text="Show the help screen then exit",
                 )
 
@@ -121,16 +124,20 @@ class Test_ArgumentParserSpec_Argument(unittest.TestCase):
 
     def test___init___PositionalArgs(self):
         keys = object()
+        type = object()
         help_text = object()
-        x = ArgumentParserSpec.Argument(keys, help_text)
+        x = ArgumentParserSpec.Argument(keys, type, help_text)
         self.assertIs(keys, x.keys)
+        self.assertIs(type, x.type)
         self.assertIs(help_text, x.help_text)
 
     def test___init___KeywordArgs(self):
         keys = object()
+        type = object()
         help_text = object()
-        x = ArgumentParserSpec.Argument(keys=keys, help_text=help_text)
+        x = ArgumentParserSpec.Argument(keys=keys, type=type, help_text=help_text)
         self.assertIs(keys, x.keys)
+        self.assertIs(type, x.type)
         self.assertIs(help_text, x.help_text)
 
     def test___eq___Equal(self):
@@ -147,6 +154,17 @@ class Test_ArgumentParserSpec_Argument(unittest.TestCase):
     def test___eq___keys_Unequal(self):
         x1 = self.new_Argument()
         x2 = self.new_Argument(keys=[])
+        self.assertFalse(x1 == x2)
+
+    def test___eq___type_Missing(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument()
+        del x2.type
+        self.assertFalse(x1 == x2)
+
+    def test___eq___type_Unequal(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument(type=[])
         self.assertFalse(x1 == x2)
 
     def test___eq___help_text_Missing(self):
@@ -176,6 +194,17 @@ class Test_ArgumentParserSpec_Argument(unittest.TestCase):
         x2 = self.new_Argument(keys=[])
         self.assertTrue(x1 != x2)
 
+    def test___ne___type_Missing(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument()
+        del x2.type
+        self.assertTrue(x1 != x2)
+
+    def test___ne___type_Unequal(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument(type=[])
+        self.assertTrue(x1 != x2)
+
     def test___ne___help_text_Missing(self):
         x1 = self.new_Argument()
         x2 = self.new_Argument()
@@ -201,19 +230,25 @@ class Test_ArgumentParserSpec_Argument(unittest.TestCase):
 
     def test___repr___(self):
         keys = ["keys"]
+        type = "the type"
         help_text = "help_text"
-        x = self.new_Argument(keys=keys, help_text=help_text)
-        expected = "Argument(keys={keys!r}, help_text={help_text!r})".format(
+        x = self.new_Argument(keys=keys, type=type, help_text=help_text)
+
+        expected = "Argument(keys={keys!r}, type={type!r}, help_text={help_text!r})".format(
             keys=keys,
+            type=type,
             help_text=help_text,
         )
         self.assertEqual(expected, "{!r}".format(x))
 
-    def new_Argument(self, keys=None, help_text=None):
+    def new_Argument(self, keys=None, type=None, help_text=None):
         if keys is None:
             keys = ["-o", "--output-file"]
+        if type is None:
+            type = ArgumentParserSpec.Argument.TYPE_STRING_VALUE
 
         return ArgumentParserSpec.Argument(
             keys=keys,
+            type=type,
             help_text=help_text,
         )

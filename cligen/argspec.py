@@ -61,26 +61,34 @@ class ArgumentParserSpec:
 
     class Argument:
 
-        def __init__(self, keys, help_text):
+        TYPE_STRING_VALUE = "string"
+        TYPE_BUILTIN_HELP = "help"
+
+        def __init__(self, keys, type, help_text):
             """
             Initializes a new instance of this class.
             *keys* must be a list or tuple of strings, each of which defines the keys that map to
             this argument when specified on the command line (e.g. ["-o", "--output-file"]).
+            *type* the type of this argument; must be one of the TYPE_ constants defined in this
+            class.
             *help_text* must be a string whose value is the text that will be displayed on a help
             screen to document this argument; may be None if no help is available.
             """
             self.keys = keys
+            self.type = type
             self.help_text = help_text
 
         def __eq__(self, other):
             try:
                 other_keys = other.keys
+                other_type = other.type
                 other_help_text = other.help_text
             except AttributeError:
                 return False
             else:
                 return (
                     self.keys == other_keys and
+                    self.type == other_type and
                     self.help_text == other_help_text
                 )
 
@@ -91,4 +99,10 @@ class ArgumentParserSpec:
             return "/".join(self.keys)
 
         def __repr__(self):
-            return "Argument(keys={0.keys!r}, help_text={0.help_text!r})".format(self)
+            return (
+                "Argument("
+                "keys={0.keys!r}, "
+                "type={0.type!r}, "
+                "help_text={0.help_text!r}"
+                ")"
+            ).format(self)

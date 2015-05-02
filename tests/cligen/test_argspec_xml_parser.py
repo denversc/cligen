@@ -160,7 +160,11 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
                 </cligen>
             """,
             arguments=[
-                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None)
+                ArgumentParserSpec.Argument(
+                    keys=("-n", "--name"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
+                    help_text=None,
+                )
             ],
         )
 
@@ -178,7 +182,11 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
                 </cligen>
             """,
             arguments=[
-                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None,)
+                ArgumentParserSpec.Argument(
+                    keys=("-n", "--name"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
+                    help_text=None,
+                )
             ],
             add_builtin_help_argument=False,
         )
@@ -197,7 +205,11 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
                 </cligen>
             """,
             arguments=[
-                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None,)
+                ArgumentParserSpec.Argument(
+                    keys=("-n", "--name"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
+                    help_text=None,
+                )
             ],
             add_builtin_help_argument=False,
         )
@@ -230,7 +242,11 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
                 </cligen>
             """,
             arguments=[
-                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None)
+                ArgumentParserSpec.Argument(
+                    keys=("-n", "--name"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
+                    help_text=None
+                )
             ],
         )
 
@@ -249,8 +265,16 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
                 </cligen>
             """,
             arguments=[
-                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None),
-                ArgumentParserSpec.Argument(keys=("-t", "--title"), help_text=None),
+                ArgumentParserSpec.Argument(
+                    keys=("-n", "--name"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
+                    help_text=None,
+                ),
+                ArgumentParserSpec.Argument(
+                    keys=("-t", "--title"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
+                    help_text=None,
+                ),
             ],
         )
 
@@ -265,6 +289,7 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             arguments=[
                 ArgumentParserSpec.Argument(
                     keys=(),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                     help_text=None,
                 )
             ],
@@ -275,13 +300,14 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             """<?xml version="1.0" ?>
                 <cligen xmlns="http://schemas.cligen.io/arguments">
                     <argument>
-                        <key>--help</key>
+                        <key>--write</key>
                     </argument>
                 </cligen>
             """,
             arguments=[
                 ArgumentParserSpec.Argument(
-                    keys=("--help",),
+                    keys=("--write",),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                     help_text=None,
                 )
             ],
@@ -292,15 +318,16 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             """<?xml version="1.0" ?>
                 <cligen xmlns="http://schemas.cligen.io/arguments">
                     <argument>
-                        <key>-h</key>
-                        <key>--help</key>
-                        <key>--help-me</key>
+                        <key>-w</key>
+                        <key>--write</key>
+                        <key>--write-file</key>
                     </argument>
                 </cligen>
             """,
             arguments=[
                 ArgumentParserSpec.Argument(
-                    keys=("-h", "--help", "--help-me"),
+                    keys=("-w", "--write", "--write-file"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                     help_text=None,
                 )
             ],
@@ -322,6 +349,7 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             arguments=[
                 ArgumentParserSpec.Argument(
                     keys=("-h", "--help", "--help-me"),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                     help_text=None,
                 )
             ],
@@ -340,6 +368,7 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             arguments=[
                 ArgumentParserSpec.Argument(
                     keys=("-q",),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                     help_text="Keep quiet",
                 )
             ],
@@ -360,6 +389,7 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             arguments=[
                 ArgumentParserSpec.Argument(
                     keys=("-q",),
+                    type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                     help_text="Keep quiet",
                 )
             ],
@@ -377,6 +407,7 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
         if add_builtin_help_argument is None or add_builtin_help_argument:
             help_argument = ArgumentParserSpec.Argument(
                 keys=("-h", "--help"),
+                type=ArgumentParserSpec.Argument.TYPE_BUILTIN_HELP,
                 help_text="Print the help information then exit",
             )
             arguments += (help_argument,)

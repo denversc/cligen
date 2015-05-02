@@ -63,6 +63,7 @@ class ArgumentSpecParser:
         if data.options.default_help_argument:
             help_argument = ArgumentParserSpec.Argument(
                 keys=("-h", "--help"),
+                type=ArgumentParserSpec.Argument.TYPE_BUILTIN_HELP,
                 help_text="Print the help information then exit",
             )
             data.arguments.append(help_argument)
@@ -86,6 +87,7 @@ class ArgumentSpecParser:
 
         return ArgumentParserSpec.Argument(
             keys=tuple(keys),
+            type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
             help_text=help_text,
         )
 

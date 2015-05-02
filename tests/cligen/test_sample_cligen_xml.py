@@ -44,16 +44,19 @@ class TestSampleCligenXml(unittest.TestCase):
 
         help_argument = ArgumentParserSpec.Argument(
             keys=("-h", "--help"),
+            type=ArgumentParserSpec.Argument.TYPE_BUILTIN_HELP,
             help_text="Print the help information then exit",
         )
 
         expected_arguments = (
             ArgumentParserSpec.Argument(
                 keys=("-i", "--input-file"),
+                type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                 help_text="The file from which to read",
             ),
             ArgumentParserSpec.Argument(
                 keys=("-o", "--output-file"),
+                type=ArgumentParserSpec.Argument.TYPE_STRING_VALUE,
                 help_text="The file to which to write",
             ),
             help_argument,
