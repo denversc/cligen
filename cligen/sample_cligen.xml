@@ -9,14 +9,19 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 -->
 
 <cligen xmlns="http://schemas.cligen.io/arguments">
+
+    <options>
+        <add-builtin-help-argument>true</add-builtin-help-argument>
+    </options>
+
     <argument>
         <key>-i</key>
         <key>--input-file</key>
-        <help>The file whose input to read</help>
+        <help>The file from which to read</help>
     </argument>
     <argument>
         <key>-o</key>
         <key>--output-file</key>
-        <help>The file to which the output is to be written</help>
+        <help>The file to which to write</help>
     </argument>
 </cligen>

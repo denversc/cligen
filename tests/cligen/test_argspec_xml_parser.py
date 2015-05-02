@@ -146,6 +146,79 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             arguments=[],
         )
 
+    def test_options_add_builtin_help_argument_True(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <options>
+                        <add-builtin-help-argument>true</add-builtin-help-argument>
+                    </options>
+                    <argument>
+                        <key>-n</key>
+                        <key>--name</key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None)
+            ],
+        )
+
+    def test_options_add_builtin_help_argument_False(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <options>
+                        <add-builtin-help-argument>false</add-builtin-help-argument>
+                    </options>
+                    <argument>
+                        <key>-n</key>
+                        <key>--name</key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None,)
+            ],
+            add_builtin_help_argument=False,
+        )
+
+    def test_options_add_builtin_help_argument_CaseInsensitive(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <options>
+                        <add-builtin-help-argument>  FaLsE   </add-builtin-help-argument>
+                    </options>
+                    <argument>
+                        <key>-n</key>
+                        <key>--name</key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None,)
+            ],
+            add_builtin_help_argument=False,
+        )
+
+    def test_options_add_builtin_help_argument_InvalidValue(self):
+        self.assert_cligen_xml_error(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <options>
+                        <add-builtin-help-argument>cheese</add-builtin-help-argument>
+                    </options>
+                    <argument>
+                        <key>-n</key>
+                        <key>--name</key>
+                    </argument>
+                </cligen>
+            """,
+            expected_message="invalid text in element {http://schemas.cligen.io/arguments}"
+            "add-builtin-help-argument: cheese (expected \"true\" or \"false\")"
+        )
+
     def test_1Argument(self):
         self.assert_xml_parse_success(
             """<?xml version="1.0" ?>
@@ -292,12 +365,25 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
             ],
         )
 
-    def assert_xml_parse_success(self, xml_string, arguments=None):
+    def assert_xml_parse_success(
+            self, xml_string, arguments=None, help_argument=None, add_builtin_help_argument=None):
         x = ArgumentSpecParser()
-        result = x.parse_string(xml_string)
+        actual = x.parse_string(xml_string)
 
         if arguments is None:
             arguments = []
         arguments = tuple(arguments)
 
-        self.assertEqual(result.arguments, arguments)
+        if add_builtin_help_argument is None or add_builtin_help_argument:
+            help_argument = ArgumentParserSpec.Argument(
+                keys=("-h", "--help"),
+                help_text="Print the help information then exit",
+            )
+            arguments += (help_argument,)
+
+        expected = ArgumentParserSpec(
+            arguments=arguments,
+            help_argument=help_argument,
+        )
+
+        self.assertEqual(actual, expected)

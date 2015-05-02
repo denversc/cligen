@@ -18,6 +18,7 @@ import unittest
 import xml.etree.ElementTree
 
 from cligen.argspec_xml_parser import ArgumentSpecParser
+from cligen.argspec import ArgumentParserSpec
 
 
 class TestSampleCligenXml(unittest.TestCase):
@@ -35,6 +36,34 @@ class TestSampleCligenXml(unittest.TestCase):
         path = self.sample_cligen_xml_path()
         parser = ArgumentSpecParser()
         parser.parse_file(path)
+
+    def test_ParsedXML(self):
+        path = self.sample_cligen_xml_path()
+        parser = ArgumentSpecParser()
+        actual = parser.parse_file(path)
+
+        help_argument = ArgumentParserSpec.Argument(
+            keys=("-h", "--help"),
+            help_text="Print the help information then exit",
+        )
+
+        expected_arguments = (
+            ArgumentParserSpec.Argument(
+                keys=("-i", "--input-file"),
+                help_text="The file from which to read",
+            ),
+            ArgumentParserSpec.Argument(
+                keys=("-o", "--output-file"),
+                help_text="The file to which to write",
+            ),
+            help_argument,
+        )
+        expected = ArgumentParserSpec(
+            arguments=expected_arguments,
+            help_argument=help_argument,
+        )
+
+        self.assertEqual(actual, expected)
 
     def sample_cligen_xml_path(self):
         import cligen.main

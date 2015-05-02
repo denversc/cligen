@@ -57,10 +57,20 @@ class ArgumentSpecParser:
             if self._is_qualified_tag(element, "argument"):
                 argument = self._parse_argument(element)
                 data.arguments.append(argument)
+            elif self._is_qualified_tag(element, "options"):
+                self._parse_options(element, data.options)
+
+        if data.options.default_help_argument:
+            help_argument = ArgumentParserSpec.Argument(
+                keys=("-h", "--help"),
+                help_text="Print the help information then exit",
+            )
+            data.arguments.append(help_argument)
+            data.help_argument = help_argument
 
         return ArgumentParserSpec(
             arguments=tuple(data.arguments),
-            help_argument=None,
+            help_argument=data.help_argument,
         )
 
     def _parse_argument(self, root):
@@ -79,6 +89,21 @@ class ArgumentSpecParser:
             help_text=help_text,
         )
 
+    def _parse_options(self, root, options):
+        for element in root:
+            if self._is_qualified_tag(element, "add-builtin-help-argument"):
+                value = self._element_text(element, default_value="").lower()
+                if value == "true":
+                    options.default_help_argument = True
+                elif value == "false":
+                    options.default_help_argument = False
+                else:
+                    raise self.CligenXmlError(
+                        "invalid text in element {}: {} (expected \"true\" or \"false\")".format(
+                            element.tag, value))
+
+        return options
+
     @classmethod
     def _qualified_tag(cls, tag):
         return "{{{}}}{}".format(cls.XML_NAMESPACE, tag)
@@ -90,11 +115,12 @@ class ArgumentSpecParser:
         return (actual_tag == expected_tag)
 
     @staticmethod
-    def _element_text(element):
+    def _element_text(element, default_value=None):
         text = element.text
-        if text is not None:
-            text = text.strip()
-        return text
+        if text is None:
+            return default_value
+        else:
+            return text.strip()
 
     class Error(Exception):
         pass
@@ -109,3 +135,10 @@ class ArgumentSpecParser:
 
         def __init__(self):
             self.arguments = []
+            self.help_argument = None
+            self.options = self.Options()
+
+        class Options:
+
+            def __init__(self):
+                self.default_help_argument = True
