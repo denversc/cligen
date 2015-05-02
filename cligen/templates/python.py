@@ -27,23 +27,26 @@ class ArgumentParser(object):
         self.stdout = stdout if stdout is not None else sys.stdout
         self.stderr = stderr if stderr is not None else sys.stderr
 
-    def parse(self, args=None, exit_application=None):
+    def parse(self, args=None, no_exit=None):
         """
         Parses the command-line arguments.
 
+        Note that this method may never return.  If the application should terminate as a result of
+        parsing the command-line arguments then sys.exit() will be invoked if the *no_exit* argument
+        is None (the default) or evaluates to False.  If the *no_exit* argument evaluates to True
+        then self.Error will be raised instead of invoking sys.exit(), delegating the responsibility
+        of exiting the application to the caller.  There are several reasons why the command-line
+        arguments parsing may result in the application exiting, including a parsing error in the
+        argument parsing and printing the help screen.
+
         *args* must be an iterable of strings which are the arguments to parse;
         may be None (the default) to use sys.stdout[1:].
-        *exit_application* will be evaluated as a boolean and is consulted if an error occurs while
-        parsing the given command-line arguments or if the command-line arguments perform some
-        action that requires the application to simply exit (such as printing the help screen):
-        if it evaluates to False then errors will be reported by raising self.Error and exit
-        immediately will be reported by returning None; otherwise, if it evaluates to True,
-        then errors will be printed to self.stderr followed by a call to sys.exit();
-        specifying None (the default) is equivalent to specifying False.
+        *no_exit* will be evaluated as a boolean; if None (the default) or if it evaluates to False
+        then sys.exit() will be invoked if the application should be terminated; if it evaluates to
+        True then self.Error will be raised instead of exiting the application; see documentation
+        above for more details.
 
-        Returns an instance of self.ParsedArguments containing the parsed arguments or None if
-        exit_application does not evaluate to True and the application should terminate immediately
-        as if successful.
+        Returns an instance of self.ParsedArguments containing the parsed arguments.
         """
         if args is None:
             args = sys.argv[1:]
@@ -54,22 +57,53 @@ class ArgumentParser(object):
             while arg_iterator.has_next():
                 self._parse_arg(arg_iterator, parsed_args)
         except self.ExitApplicationSuccessfully as e:
-            if exit_application:
-                sys.exit(e.exit_code)
-        except self.Error as e:
-            if not exit_application:
+            if no_exit:
                 raise
-            else:
-                print("ERROR: invalid command-line arguments: {}".format(e), file=self.stderr)
-                {% if argspec.help_argument %}
-                print("Run with {{ argspec.help_argument|joined_keys}} for help", file=self.stderr)
-                {% endif %}
-                sys.exit(e.exit_code)
+            sys.exit(e.exit_code)
+        except self.InvalidCommandLineArguments as e:
+            if no_exit:
+                raise
+            self.print_invalid_args(e, self.stderr)
+            sys.exit(e.exit_code)
+        except self.Error as e:
+            if no_exit:
+                raise
+            self.print_error(e, self.stderr)
+            sys.exit(e.exit_code)
 
         return parsed_args
 
     def _parse_arg(self, arg_iterator, parsed_args):
         arg = arg_iterator.next()
+
+    @staticmethod
+    def print_lines(lines, f):
+        for line in lines:
+            print(line, file=f)
+
+    @classmethod
+    def print_invalid_args(cls, error, f=None):
+        lines = cls.get_invalid_args_lines(error)
+        cls.print_lines(lines, f)
+
+    @staticmethod
+    def get_invalid_args_lines(error):
+        yield "ERROR: invalid command-line arguments: {}".format(error)
+        {% if argspec.help_argument %}
+        yield "Run with {{ argspec.help_argument|joined_keys}} for help"
+        {% endif %}
+
+    @classmethod
+    def print_error(cls, error, f=None):
+        lines = cls.get_error_lines(error)
+        cls.print_lines(lines, f)
+
+    @staticmethod
+    def get_error_lines(error):
+        message = "{}".format(error)
+        none_message = "{}".format(None)
+        if message != none_message:
+            yield message
 
     class ParsedArguments(object):
         """
@@ -122,24 +156,32 @@ class ArgumentParser(object):
 
     class Error(Exception):
         """
-        The exception raised if an error occurs when parsing command-line arguments.
+        The exception raised if the application should terminate as a result of command-line
+        arguments parsing.
         The *exit_code* attribute will be an int whose value is a recommended exit code to specify
         to sys.exit() to terminate the application.
         """
 
-        # an exit code of 2 conventionally indicates invalid command-line arguments
-        DEFAULT_EXIT_CODE = 2
+        # the exit code conventionally used to indicate that the application finished successfully
+        EXIT_CODE_SUCCESS = 0
 
-        def __init__(self, message, exit_code=None):
+        # the exit code conventionally used to indicate that the application finished
+        # unsuccessfully, except for command-line arguments parsing errors
+        EXIT_CODE_FAIL = 1
+
+        # the exit code conventionally used to indicate that the application finished
+        # unsuccessfully, due to command-line arguments parsing errors
+        EXIT_CODE_INVALID_ARGS = 2
+
+        def __init__(self, message, exit_code):
             """
             Initializes a new instance of this class.
             *message* must be a string whose value describes the error.
             *exit_code* must be an int whose value is the recommended exit code to specify to
-            sys.exit() in response to this error; may be None (the default) to use
-            self.DEFAULT_EXIT_CODE.
+            sys.exit() in response to this error.
             """
             super(self, ArgumentParser.Error).__init__(message)
-            self.exit_code = exit_code if exit_code is not None else self.DEFAULT_EXIT_CODE
+            self.exit_code = exit_code
 
     class ExitApplicationSuccessfully(Error):
         """
@@ -148,13 +190,22 @@ class ArgumentParser(object):
         For example, this exception is raised if the builtin --help argument is specified.
         """
 
-        # the exit_code specified to super().__init__() which conventionally indicates success.
-        SUCCESS_EXIT_CODE = 0
+        def __init__(self, message=None, exit_code=None):
+            if exit_code is None:
+                exit_code = self.EXIT_CODE_SUCCESS
+            super(self, ArgumentParser.ExitApplicationSuccessfully).__init__(
+                message=message, exit_code=exit_code)
+
+    class InvalidCommandLineArguments(Error):
+        """
+        Exception raised if the command-line arguments parsing fails due to invalid arguments,
+        missing arguments, etc.
+        """
 
         def __init__(self, message=None, exit_code=None):
             if exit_code is None:
-                exit_code = self.SUCCESS_EXIT_CODE
-            super(self, ArgumentParser.ExitApplicationSuccessfully).__init__(
+                exit_code = self.EXIT_CODE_INVALID_ARGS
+            super(self, ArgumentParser.InvalidCommandLineArguments).__init__(
                 message=message, exit_code=exit_code)
 
 
@@ -162,5 +213,4 @@ class ArgumentParser(object):
 if __name__ == "__main__":
     parser = ArgumentParser()
     parsed_args = parser.parse()
-    if parsed_args is not None:
-        parsed_args.print()
+    parsed_args.print()
