@@ -63,12 +63,12 @@ class ArgumentParser(object):
         except self.InvalidCommandLineArguments as e:
             if no_exit:
                 raise
-            self.print_invalid_args(e, self.stderr)
+            self.print_invalid_args(e)
             sys.exit(e.exit_code)
         except self.Error as e:
             if no_exit:
                 raise
-            self.print_error(e, self.stderr)
+            self.print_error(e)
             sys.exit(e.exit_code)
 
         return parsed_args
@@ -77,8 +77,8 @@ class ArgumentParser(object):
         arg = arg_iterator.peek()
         if arg is None:
             pass
-        elif not arg.startswith("-"):
-            self._parse_positional_arg(arg_iterator, parsed_args)
+        elif self._parse_positional_arg(arg_iterator, parsed_args):
+            pass
         {% for arg in argspec.arguments %}
         elif self._parse_arg_{{ arg|varname }}(arg_iterator, parsed_args):
             pass
@@ -108,7 +108,12 @@ class ArgumentParser(object):
     {% endfor %}
 
     def _parse_positional_arg(self, arg_iterator, parsed_args):
-        arg = arg_iterator.next()
+        arg = arg_iterator.peek()
+        if arg is None or arg.startswith("-"):
+            return False
+        else:
+            arg_iterator.advance()
+
         raise self.UnexpectedArgument("unexpected argument: {}".format(arg))
 
     @staticmethod
@@ -116,10 +121,11 @@ class ArgumentParser(object):
         for line in lines:
             print(line, file=f)
 
-    @classmethod
-    def print_invalid_args(cls, error, f=None):
-        lines = cls.get_invalid_args_lines(error)
-        cls.print_lines(lines, f)
+    def print_invalid_args(self, error, f=None):
+        if f is None:
+            f = self.stderr
+        lines = self.get_invalid_args_lines(error)
+        self.print_lines(lines, f)
 
     @staticmethod
     def get_invalid_args_lines(error):
@@ -128,17 +134,18 @@ class ArgumentParser(object):
         yield "Run with {{ argspec.help_argument|joined_keys}} for help"
         {% endif %}
 
-    @classmethod
-    def print_error(cls, error, f=None):
-        lines = cls.get_error_lines(error)
-        cls.print_lines(lines, f)
+    def print_error(self, error, f=None):
+        if f is None:
+            f = self.stderr
+        lines = self.get_error_lines(error)
+        self.print_lines(lines, f)
 
     @staticmethod
     def get_error_lines(error):
         message = "{}".format(error)
         none_message = "{}".format(None)
         if message != none_message:
-            yield message
+            yield "ERROR: {}".format(message)
 
     class ParsedArguments(object):
         """
