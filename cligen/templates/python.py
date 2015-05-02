@@ -74,7 +74,42 @@ class ArgumentParser(object):
         return parsed_args
 
     def _parse_arg(self, arg_iterator, parsed_args):
+        arg = arg_iterator.peek()
+        if arg is None:
+            pass
+        elif not arg.startswith("-"):
+            self._parse_positional_arg(arg_iterator, parsed_args)
+        {% for arg in argspec.arguments %}
+        elif self._parse_arg_{{ arg|varname }}(arg_iterator, parsed_args):
+            pass
+        {% endfor %}
+        else:
+            raise self.UnknownArgument("unknown argument: {}".format(arg))
+
+    {% for arg in argspec.arguments %}
+    def _parse_arg_{{ arg|varname }}(self, arg_iterator, parsed_args):
+        arg = arg_iterator.peek()
+        if arg is None:
+            return False
+        {% for key in arg.keys %}
+        elif arg == "{{key}}":
+            arg_iterator.advance()
+        {% endfor %}
+        else:
+            return False
+
+        value = arg_iterator.next()
+        if value is None:
+            raise self.ArgumentValueMissing("{} must be followed by a value".format(arg))
+
+        parsed_args.{{ arg|varname }} = value
+        return True
+
+    {% endfor %}
+
+    def _parse_positional_arg(self, arg_iterator, parsed_args):
         arg = arg_iterator.next()
+        raise self.UnexpectedArgument("unexpected argument: {}".format(arg))
 
     @staticmethod
     def print_lines(lines, f):
@@ -148,11 +183,14 @@ class ArgumentParser(object):
 
         def next(self):
             arg = self.peek()
-            self.index += 1
+            self.advance()
             return arg
 
         def has_next(self):
             return (self.peek() is not None)
+
+        def advance(self):
+            self.index += 1
 
     class Error(Exception):
         """
@@ -180,7 +218,7 @@ class ArgumentParser(object):
             *exit_code* must be an int whose value is the recommended exit code to specify to
             sys.exit() in response to this error.
             """
-            super(self, ArgumentParser.Error).__init__(message)
+            super(ArgumentParser.Error, self).__init__(message)
             self.exit_code = exit_code
 
     class ExitApplicationSuccessfully(Error):
@@ -193,7 +231,7 @@ class ArgumentParser(object):
         def __init__(self, message=None, exit_code=None):
             if exit_code is None:
                 exit_code = self.EXIT_CODE_SUCCESS
-            super(self, ArgumentParser.ExitApplicationSuccessfully).__init__(
+            super(ArgumentParser.ExitApplicationSuccessfully, self).__init__(
                 message=message, exit_code=exit_code)
 
     class InvalidCommandLineArguments(Error):
@@ -205,8 +243,37 @@ class ArgumentParser(object):
         def __init__(self, message=None, exit_code=None):
             if exit_code is None:
                 exit_code = self.EXIT_CODE_INVALID_ARGS
-            super(self, ArgumentParser.InvalidCommandLineArguments).__init__(
+            super(ArgumentParser.InvalidCommandLineArguments, self).__init__(
                 message=message, exit_code=exit_code)
+
+    class ArgumentValueMissing(InvalidCommandLineArguments):
+        """
+        Exception raised if a command-line argument requires a value to follow it but that value
+        is missing.
+
+        For example, suppose the parser recognizes the --name argument which is required to be
+        followed by a name as the next argument; if there are no arguments specified after --name
+        on the command line then this exception will be raised.
+        """
+
+    class UnknownArgument(InvalidCommandLineArguments):
+        """
+        Exception raised if a command-line argument is not a recognized option.
+
+        For example, suppose the parser recognizes the options --name and --title but the
+        argument --subject was specified; the presence of the --subject option would cause
+        this exception to be raised.
+        """
+
+    class UnexpectedArgument(InvalidCommandLineArguments):
+        """
+        Exception raised if a command-line argument is specified when none is expected.
+
+        For example, suppose the parser recognizes the options --name and the arguments
+        "--name Peter hello" were specified; the "hello" argument would cause this exception to
+        be raised since it is an orphaned positional argument and the parser does not recognize
+        positional arguments.
+        """
 
 
 # Allows this file to be run as an application to test parsing command-line arguments
