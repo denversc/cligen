@@ -92,12 +92,21 @@ class Test_ArgumentSpecParser(unittest.TestCase):
 
     def new_ArgumentParserSpec(self, arguments=DEFAULT_VALUE, help_argument=DEFAULT_VALUE):
         if arguments is self.DEFAULT_VALUE:
-            input_file_argument = ArgumentParserSpec.Argument(keys=["-i", "--input-file"])
-            output_file_argument = ArgumentParserSpec.Argument(keys=["-o", "--output-file"])
+            input_file_argument = ArgumentParserSpec.Argument(
+                keys=["-i", "--input-file"],
+                help_text="The input file",
+            )
+            output_file_argument = ArgumentParserSpec.Argument(
+                keys=["-o", "--output-file"],
+                help_text="The output file",
+            )
             arguments = [input_file_argument, output_file_argument]
 
             if help_argument is self.DEFAULT_VALUE:
-                help_argument = ArgumentParserSpec.Argument(keys=["-h", "--help"])
+                help_argument = ArgumentParserSpec.Argument(
+                    keys=["-h", "--help"],
+                    help_text="Show the help screen then exit",
+                )
 
             if help_argument is not None:
                 arguments.append(help_argument)
@@ -108,17 +117,21 @@ class Test_ArgumentSpecParser(unittest.TestCase):
         )
 
 
-class Test_ArgumentSpecParser_Argument(unittest.TestCase):
+class Test_ArgumentParserSpec_Argument(unittest.TestCase):
 
     def test___init___PositionalArgs(self):
         keys = object()
-        x = ArgumentParserSpec.Argument(keys)
+        help_text = object()
+        x = ArgumentParserSpec.Argument(keys, help_text)
         self.assertIs(keys, x.keys)
+        self.assertIs(help_text, x.help_text)
 
     def test___init___KeywordArgs(self):
         keys = object()
-        x = ArgumentParserSpec.Argument(keys=keys)
+        help_text = object()
+        x = ArgumentParserSpec.Argument(keys=keys, help_text=help_text)
         self.assertIs(keys, x.keys)
+        self.assertIs(help_text, x.help_text)
 
     def test___eq___Equal(self):
         x1 = self.new_Argument()
@@ -134,6 +147,17 @@ class Test_ArgumentSpecParser_Argument(unittest.TestCase):
     def test___eq___keys_Unequal(self):
         x1 = self.new_Argument()
         x2 = self.new_Argument(keys=[])
+        self.assertFalse(x1 == x2)
+
+    def test___eq___help_text_Missing(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument()
+        del x2.help_text
+        self.assertFalse(x1 == x2)
+
+    def test___eq___help_text_Unequal(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument(help_text="blah blah")
         self.assertFalse(x1 == x2)
 
     def test___ne___Equal(self):
@@ -152,6 +176,17 @@ class Test_ArgumentSpecParser_Argument(unittest.TestCase):
         x2 = self.new_Argument(keys=[])
         self.assertTrue(x1 != x2)
 
+    def test___ne___help_text_Missing(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument()
+        del x2.help_text
+        self.assertTrue(x1 != x2)
+
+    def test___ne___help_text_Unequal(self):
+        x1 = self.new_Argument()
+        x2 = self.new_Argument(help_text="blah blah")
+        self.assertTrue(x1 != x2)
+
     def test___str___keys_Length0(self):
         x = self.new_Argument(keys=[])
         self.assertEqual("", "{}".format(x))
@@ -166,16 +201,19 @@ class Test_ArgumentSpecParser_Argument(unittest.TestCase):
 
     def test___repr___(self):
         keys = ["keys"]
-        x = self.new_Argument(keys=keys)
-        expected = "Argument(keys={keys!r})".format(
+        help_text = "help_text"
+        x = self.new_Argument(keys=keys, help_text=help_text)
+        expected = "Argument(keys={keys!r}, help_text={help_text!r})".format(
             keys=keys,
+            help_text=help_text,
         )
         self.assertEqual(expected, "{!r}".format(x))
 
-    def new_Argument(self, keys=None):
+    def new_Argument(self, keys=None, help_text=None):
         if keys is None:
             keys = ["-o", "--output-file"]
 
         return ArgumentParserSpec.Argument(
             keys=keys,
+            help_text=help_text,
         )

@@ -12,5 +12,11 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
     <argument>
         <key>-i</key>
         <key>--input-file</key>
+        <help>The file whose input to read</help>
+    </argument>
+    <argument>
+        <key>-o</key>
+        <key>--output-file</key>
+        <help>The file to which the output is to be written</help>
     </argument>
 </cligen>

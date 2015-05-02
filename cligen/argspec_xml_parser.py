@@ -26,10 +26,6 @@ class ArgumentSpecParser:
 
     XML_NAMESPACE = "http://schemas.cligen.io/arguments"
 
-    TAG_ROOT = "cligen"
-    TAG_ARGUMENT = "argument"
-    TAG_KEY = "key"
-
     def parse_string(self, xml_string):
         try:
             root_element = xml.etree.ElementTree.fromstring(xml_string)
@@ -51,15 +47,14 @@ class ArgumentSpecParser:
         ns = {"cligen", self.XML_NAMESPACE}
         data = self.ParsedData()
 
-        expected_root_tag = self._qualified_tag(self.TAG_ROOT)
+        expected_root_tag = self._qualified_tag("cligen")
         if root.tag != expected_root_tag:
             raise self.CligenXmlError(
                 "incorrect tag name of XML root element: {} (expected {})".format(
                     root.tag, expected_root_tag))
 
-        argument_tag = self._qualified_tag(self.TAG_ARGUMENT)
         for element in root:
-            if element.tag == argument_tag:
+            if self._is_qualified_tag(element, "argument"):
                 argument = self._parse_argument(element)
                 data.arguments.append(argument)
 
@@ -70,21 +65,36 @@ class ArgumentSpecParser:
 
     def _parse_argument(self, root):
         keys = []
-
-        key_tag = self._qualified_tag(self.TAG_KEY)
+        help_text = None
 
         for element in root:
-            if element.tag == key_tag:
-                key = element.text.strip()
+            if self._is_qualified_tag(element, "key"):
+                key = self._element_text(element)
                 keys.append(key)
+            elif self._is_qualified_tag(element, "help"):
+                help_text = self._element_text(element)
 
         return ArgumentParserSpec.Argument(
             keys=tuple(keys),
+            help_text=help_text,
         )
 
     @classmethod
     def _qualified_tag(cls, tag):
         return "{{{}}}{}".format(cls.XML_NAMESPACE, tag)
+
+    @classmethod
+    def _is_qualified_tag(cls, element, tag):
+        expected_tag = cls._qualified_tag(tag)
+        actual_tag = element.tag
+        return (actual_tag == expected_tag)
+
+    @staticmethod
+    def _element_text(element):
+        text = element.text
+        if text is not None:
+            text = text.strip()
+        return text
 
     class Error(Exception):
         pass

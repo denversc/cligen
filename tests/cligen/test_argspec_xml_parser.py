@@ -157,7 +157,138 @@ class Test_ArgumentSpecParser_parse_string(unittest.TestCase):
                 </cligen>
             """,
             arguments=[
-                ArgumentParserSpec.Argument(keys=("-n", "--name"))
+                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None)
+            ],
+        )
+
+    def test_2Arguments(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                        <key>-n</key>
+                        <key>--name</key>
+                    </argument>
+                    <argument>
+                        <key>-t</key>
+                        <key>--title</key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(keys=("-n", "--name"), help_text=None),
+                ArgumentParserSpec.Argument(keys=("-t", "--title"), help_text=None),
+            ],
+        )
+
+    def test_argument_key_NotSpecified(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(
+                    keys=(),
+                    help_text=None,
+                )
+            ],
+        )
+
+    def test_argument_key_1Key(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                        <key>--help</key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(
+                    keys=("--help",),
+                    help_text=None,
+                )
+            ],
+        )
+
+    def test_argument_key_3Keys(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                        <key>-h</key>
+                        <key>--help</key>
+                        <key>--help-me</key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(
+                    keys=("-h", "--help", "--help-me"),
+                    help_text=None,
+                )
+            ],
+        )
+
+    def test_argument_key_trimming(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                        <key>   -h</key>
+                        <key>--help    </key>
+                        <key>
+                            --help-me
+                        </key>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(
+                    keys=("-h", "--help", "--help-me"),
+                    help_text=None,
+                )
+            ],
+        )
+
+    def test_argument_help(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                        <key>-q</key>
+                        <help>Keep quiet</help>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(
+                    keys=("-q",),
+                    help_text="Keep quiet",
+                )
+            ],
+        )
+
+    def test_argument_help_trimming(self):
+        self.assert_xml_parse_success(
+            """<?xml version="1.0" ?>
+                <cligen xmlns="http://schemas.cligen.io/arguments">
+                    <argument>
+                        <key>-q</key>
+                        <help>
+                            Keep quiet
+                        </help>
+                    </argument>
+                </cligen>
+            """,
+            arguments=[
+                ArgumentParserSpec.Argument(
+                    keys=("-q",),
+                    help_text="Keep quiet",
+                )
             ],
         )
 

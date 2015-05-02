@@ -48,21 +48,28 @@ class ArgumentParserSpec:
 
     class Argument:
 
-        def __init__(self, keys):
+        def __init__(self, keys, help_text):
             """
             Initializes a new instance of this class.
             *keys* must be a list or tuple of strings, each of which defines the keys that map to
             this argument when specified on the command line (e.g. ["-o", "--output-file"]).
+            *help_text* must be a string whose value is the text that will be displayed on a help
+            screen to document this argument; may be None if no help is available.
             """
             self.keys = keys
+            self.help_text = help_text
 
         def __eq__(self, other):
             try:
                 other_keys = other.keys
+                other_help_text = other.help_text
             except AttributeError:
                 return False
             else:
-                return self.keys == other_keys
+                return (
+                    self.keys == other_keys
+                    and self.help_text == other_help_text
+                )
 
         def __ne__(self, other):
             return not self.__eq__(other)
@@ -71,4 +78,4 @@ class ArgumentParserSpec:
             return "/".join(self.keys)
 
         def __repr__(self):
-            return "Argument(keys={0.keys!r})".format(self)
+            return "Argument(keys={0.keys!r}, help_text={0.help_text!r})".format(self)
