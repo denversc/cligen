@@ -1,0 +1,24 @@
+[spec]
+<cligen xmlns="http://schemas.cligen.io/arguments">
+    <argument>
+        <key>-i</key>
+        <key>--input-file</key>
+        <help>The file from which to read</help>
+    </argument>
+    <argument>
+        <key>-o</key>
+        <key>--output-file</key>
+        <help>The file to which to write</help>
+    </argument>
+</cligen>
+
+[arguments]
+
+[exit code]
+0
+
+[stdout]
+--input-file [not set]
+--output-file [not set]
+
+[stderr]
