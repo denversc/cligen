@@ -196,7 +196,7 @@ class ArgumentParser(object):
                 f = sys.stdout
 
             {% for arg in argspec.arguments if arg.supports_values() %}
-            print("{{ arg|most_descriptive_key }} = {}".format(self.{{ arg|varname }}), file=f)
+            print("{{ arg|most_descriptive_key }} {}".format("[not set]" if self.{{ arg|varname }} is None else self.{{ arg|varname }}), file=f)
             {% endfor %}
 
     class _ArgumentIterator(object):
